@@ -5,6 +5,7 @@ import org.jdatepicker.impl.JDatePanelImpl;
 import org.jdatepicker.impl.JDatePickerImpl;
 import org.jdatepicker.impl.UtilDateModel;
 import validaciones.Validaciones;
+import bd.Tabladeusuarios;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -14,29 +15,29 @@ import java.util.Properties;
 
 public class administracionUsuarios extends JFrame {
 
-    private JTextField txtId, txtNombres, txtApellidos, txtEmail, txtTelefono;
+    private JTextField txtId, txtNombres, txtApellidos, txtEmail, txtTelefono, txtBuscar;
     private JPasswordField txtClave;
-    private JComboBox<String> cbTipoUsuario;
+    private JComboBox<String> cbTipoUsuario, cbFiltroBusqueda;
     private JDatePickerImpl datePicker;
     private JTable tableUsuarios;
     private DefaultTableModel tableModel;
 
     public administracionUsuarios() {
         setTitle("Gestión de Usuarios - Biblioteca Colegio Amigos De Don Bosco");
-        setSize(900, 800);
+        setSize(1000, 900);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
 
         // Panel de Campos
         JPanel panelCampos = new JPanel();
-        panelCampos.setLayout(new GridLayout(5, 4, 10, 10)); // Cambiado a GridLayout para una mejor organización
+        panelCampos.setLayout(new GridLayout(5, 4, 10, 10));
         panelCampos.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
         // Componentes del panel de gestión de usuarios
         JLabel lblId = new JLabel("ID:");
         txtId = new JTextField();
-        txtId.setEnabled(false);  // ID será autogenerado
+        txtId.setEnabled(false);
 
         JLabel lblNombres = new JLabel("Nombres:");
         txtNombres = new JTextField();
@@ -83,9 +84,23 @@ public class administracionUsuarios extends JFrame {
         panelCampos.add(lblFechaRegistro);
         panelCampos.add(datePicker);
 
+        // Panel de búsqueda
+        JPanel panelBusqueda = new JPanel();
+        panelBusqueda.setLayout(new FlowLayout(FlowLayout.LEFT));
+        JLabel lblBuscar = new JLabel("Buscar:");
+        txtBuscar = new JTextField(20);
+        cbFiltroBusqueda = new JComboBox<>(new String[]{"Nombre", "Correo", "Tipo de Usuario"});
+        JButton btnBuscar = new JButton("Buscar");
+
+        // Añadir componentes al panel de búsqueda
+        panelBusqueda.add(lblBuscar);
+        panelBusqueda.add(txtBuscar);
+        panelBusqueda.add(cbFiltroBusqueda);
+        panelBusqueda.add(btnBuscar);
+
         // Tabla para mostrar los usuarios
         tableModel = new DefaultTableModel(new Object[]{
-            "ID", "Nombre", "Apellidos", "Correo Electrónico", "Teléfono", "Tipo de Usuario", "Fecha de Registro"}, 0);
+            "ID", "Nombres", "Apellidos", "Tipo de Usuario", "Correo Electrónico", "Clave", "Teléfono", "Fecha de Registro", "Límite de Préstamos"}, 0);
         tableUsuarios = new JTable(tableModel);
         JScrollPane scrollPane = new JScrollPane(tableUsuarios);
 
@@ -115,26 +130,37 @@ public class administracionUsuarios extends JFrame {
         btnEliminar.addActionListener(e -> eliminarUsuario());
         btnEditar.addActionListener(e -> editarUsuario());
         btnCancelar.addActionListener(e -> limpiarCampos());
+        btnBuscar.addActionListener(e -> buscarUsuarios());
+
+        cbTipoUsuario.addActionListener(e -> actualizarIdDinamicamente());
 
         // Añadir componentes al frame principal
         add(panelCampos, BorderLayout.NORTH);
-        add(scrollPane, BorderLayout.CENTER);
+        add(panelBusqueda, BorderLayout.CENTER);
+        add(scrollPane, BorderLayout.CENTER); // Usa BorderLayout.CENTER para mostrar correctamente la tabla
         add(panelBotones, BorderLayout.SOUTH);
 
-        // Preparar el próximo registro al iniciar la ventana
-        prepararNuevoRegistro();
+        // Cargar los usuarios en la tabla al iniciar
+        cargarUsuariosEnTabla();
 
         setVisible(true);
     }
 
-    // Método para preparar el próximo registro
-    private void prepararNuevoRegistro() {
-        limpiarCampos();
+    // Método para cargar usuarios en la tabla
+    private void cargarUsuariosEnTabla() {
+        Tabladeusuarios.cargarUsuariosEnTabla(tableModel, this);
+    }
+
+    private void actualizarIdDinamicamente() {
         String nuevoId = Validaciones.generarIdUsuario((String) cbTipoUsuario.getSelectedItem());
         txtId.setText(nuevoId);
     }
 
-    // Métodos para los botones
+    private void prepararNuevoRegistro() {
+        limpiarCampos();
+        actualizarIdDinamicamente();
+    }
+
     private void limpiarCampos() {
         txtNombres.setText("");
         txtApellidos.setText("");
@@ -162,29 +188,43 @@ public class administracionUsuarios extends JFrame {
             }
             String fechaRegistro = new java.text.SimpleDateFormat("yyyy-MM-dd").format(selectedDate);
 
-            // Validar que los campos no estén vacíos
             if (nombre.isEmpty() || apellidos.isEmpty() || clave.isEmpty() || email.isEmpty() || telefono.isEmpty() || fechaRegistro.isEmpty()) {
                 JOptionPane.showMessageDialog(this, "Todos los campos son obligatorios.", "Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }
 
-            // Validar formato del correo electrónico
             if (!email.matches("^[\\w.%+-]+@[\\w.-]+\\.[a-zA-Z]{2,6}$")) {
                 JOptionPane.showMessageDialog(this, "El correo electrónico no es válido.", "Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }
 
-            // Llamar al método para agregar el usuario a la base de datos
             boolean agregado = Validaciones.agregarUsuario(nombre, apellidos, email, tipoUsuario, telefono, clave, fechaRegistro);
             if (agregado) {
                 JOptionPane.showMessageDialog(this, "Usuario agregado correctamente.");
-                prepararNuevoRegistro(); // Prepara el siguiente registro después de agregar
-                cargarUsuariosEnTabla(); // Actualiza la tabla con el nuevo usuario
+                prepararNuevoRegistro();
+                cargarUsuariosEnTabla();
             } else {
                 JOptionPane.showMessageDialog(this, "Error al agregar el usuario. Verifique los datos e inténtelo nuevamente.", "Error", JOptionPane.ERROR_MESSAGE);
             }
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Ocurrió un error: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void buscarUsuarios() {
+        String filtro = (String) cbFiltroBusqueda.getSelectedItem();
+        String termino = txtBuscar.getText().toLowerCase();
+
+        for (int i = 0; i < tableModel.getRowCount(); i++) {
+            boolean visible = false;
+            if (filtro.equals("Nombre")) {
+                visible = tableModel.getValueAt(i, 1).toString().toLowerCase().contains(termino);
+            } else if (filtro.equals("Correo")) {
+                visible = tableModel.getValueAt(i, 4).toString().toLowerCase().contains(termino);
+            } else if (filtro.equals("Tipo de Usuario")) {
+                visible = tableModel.getValueAt(i, 3).toString().toLowerCase().contains(termino);
+            }
+            tableUsuarios.setRowSelectionInterval(i, i);
         }
     }
 
@@ -198,10 +238,6 @@ public class administracionUsuarios extends JFrame {
 
     private void editarUsuario() {
         // Implementar la lógica para editar un usuario
-    }
-
-    private void cargarUsuariosEnTabla() {
-        // Implementar la lógica para cargar usuarios en la tabla después de agregar o editar
     }
 
     public static void main(String[] args) {

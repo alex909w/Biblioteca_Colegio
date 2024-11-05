@@ -14,24 +14,26 @@ public class Tabladeusuarios {
 
         // Intenta obtener la conexión y realizar la operación
         try (Connection connection = ConexionBaseDatos.getConexion();
-             PreparedStatement statement = connection.prepareStatement("SELECT id_usuario, nombre, apellido, clave, email FROM Usuarios");
+             PreparedStatement statement = connection.prepareStatement("SELECT id_usuario, nombre, apellido, tipo_usuario, email, clave, telefono, fecha_registro, limite_prestamos FROM Usuarios");
              ResultSet resultSet = statement.executeQuery()) {
 
             while (resultSet.next()) {
                 String id = resultSet.getString("id_usuario");
                 String nombre = resultSet.getString("nombre");
                 String apellidos = resultSet.getString("apellido");
-                String clave = resultSet.getString("clave");
+                String tipoUsuario = resultSet.getString("tipo_usuario");
                 String email = resultSet.getString("email");
+                String clave = resultSet.getString("clave");
+                String telefono = resultSet.getString("telefono");
+                String fechaRegistro = resultSet.getString("fecha_registro");
+                int limitePrestamos = resultSet.getInt("limite_prestamos");
 
                 // Añade cada fila a la tabla
-                tableModel.addRow(new Object[]{id, nombre, apellidos, clave, email});
+                tableModel.addRow(new Object[]{id, nombre, apellidos, tipoUsuario, email, clave, telefono, fechaRegistro, limitePrestamos});
             }
 
         } catch (Exception e) {
             JOptionPane.showMessageDialog(frame, "Error al cargar los usuarios: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
-
-        // Nota: No llames a cerrarConexion() aquí si aún necesitas la conexión para otras operaciones
     }
 }
