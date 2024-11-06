@@ -2,6 +2,7 @@ package paneles;
 
 import javax.swing.*;
 import java.awt.*;
+import acciones.GestionDocumentos; 
 import acciones.administracionUsuarios;
 import login.BibliotecaLogin;
 
@@ -35,10 +36,15 @@ public class MenuAdministrador extends JFrame {
         panelNavegacion.add(btnPrestamos);
         panelNavegacion.add(btnSalir);
 
+        // Acción del botón "Gestión de Usuarios"
         btnGestionUsuarios.addActionListener(e -> {
-    new administracionUsuarios().setVisible(true);
-    dispose();
-});
+            new administracionUsuarios().setVisible(true);
+            dispose();
+        });
+
+        // Acción del botón "Gestión de Documentos"
+     btnGestionDocumentos.addActionListener(e -> GestionDocumentos.mostrarGestionDocumentos(this));
+
 
         // Acción del botón "Salir"
         btnSalir.addActionListener(e -> {

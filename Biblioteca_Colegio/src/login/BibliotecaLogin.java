@@ -3,7 +3,7 @@ package login;
 import paneles.MenuAdministrador;
 import paneles.MenuProfesor;
 import paneles.MenuAlumno;
-import bd.GestionUsuarios;
+import validaciones.Validaciones;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -62,8 +62,8 @@ public class BibliotecaLogin extends JFrame {
             String correo = txtCorreo.getText();
             String contrasena = String.valueOf(txtContrasena.getPassword());
 
-            if (GestionUsuarios.validarCredenciales(correo, contrasena)) {
-                String tipoUsuario = GestionUsuarios.obtenerTipoUsuario(correo);
+            if (Validaciones.validarCredenciales(correo, contrasena)) {
+                String tipoUsuario = Validaciones.obtenerTipoUsuario(correo);
                 lblMensaje.setText("Login exitoso!");
                 JOptionPane.showMessageDialog(null, "Bienvenido, " + correo);
                 dispose();
