@@ -1,6 +1,6 @@
-package paneles;
+package com.biblioteca.ui;
 
-import bd.ConexionBaseDatos;
+import com.biblioteca.bd.ConexionBaseDatos;
 import javax.swing.*;
 import java.awt.*;
 

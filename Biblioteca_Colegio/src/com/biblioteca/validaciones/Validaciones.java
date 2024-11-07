@@ -1,6 +1,6 @@
-package validaciones;
+package com.biblioteca.validaciones;
 
-import bd.ConexionBaseDatos;
+import com.biblioteca.bd.ConexionBaseDatos;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;

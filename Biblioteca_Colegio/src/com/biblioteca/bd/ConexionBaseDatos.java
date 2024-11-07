@@ -1,4 +1,4 @@
-package bd;
+package com.biblioteca.bd;
 
 import javax.swing.*;
 import java.sql.Connection;

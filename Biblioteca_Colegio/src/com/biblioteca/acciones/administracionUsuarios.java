@@ -1,11 +1,11 @@
-package acciones;
+package com.biblioteca.acciones;
 
-import validaciones.GestionUsuarios;
-import utilidades.DateLabelFormatter;
+import com.biblioteca.validaciones.GestionUsuarios;
+import com.biblioteca.utilidades.DateLabelFormatter;
 import org.jdatepicker.impl.JDatePanelImpl;
 import org.jdatepicker.impl.JDatePickerImpl;
 import org.jdatepicker.impl.UtilDateModel;
-import validaciones.Validaciones;
+import com.biblioteca.validaciones.Validaciones;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -14,7 +14,7 @@ import java.awt.*;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Properties;
-import paneles.MenuAdministrador;
+import com.biblioteca.ui.MenuAdministrador;
 
 public class administracionUsuarios extends JFrame {
 

@@ -1,9 +1,6 @@
-package login;
+package com.biblioteca.ui;
 
-import paneles.MenuAdministrador;
-import paneles.MenuProfesor;
-import paneles.MenuAlumno;
-import validaciones.Validaciones;
+import com.biblioteca.validaciones.Validaciones;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;

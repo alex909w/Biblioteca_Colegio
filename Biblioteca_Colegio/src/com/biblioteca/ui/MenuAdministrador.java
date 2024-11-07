@@ -1,10 +1,12 @@
-package paneles;
+package com.biblioteca.ui;
 
+import com.biblioteca.acciones.GestionDocumentos;
+import com.biblioteca.acciones.administracionUsuarios;
+import com.biblioteca.validaciones.Validaciones;
 import javax.swing.*;
 import java.awt.*;
-import acciones.GestionDocumentos; 
-import acciones.administracionUsuarios;
-import login.BibliotecaLogin;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 public class MenuAdministrador extends JFrame {
 
@@ -43,8 +45,12 @@ public class MenuAdministrador extends JFrame {
         });
 
         // Acción del botón "Gestión de Documentos"
-     btnGestionDocumentos.addActionListener(e -> GestionDocumentos.mostrarGestionDocumentos(this));
-
+btnGestionDocumentos.addActionListener(e -> {
+    SwingUtilities.invokeLater(() -> {
+        new GestionDocumentos().setVisible(true);
+        dispose();
+    });
+});
 
         // Acción del botón "Salir"
         btnSalir.addActionListener(e -> {
