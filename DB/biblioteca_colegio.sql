@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1:3306
--- Tiempo de generación: 07-11-2024 a las 17:50:25
+-- Tiempo de generación: 07-11-2024 a las 23:02:08
 -- Versión del servidor: 8.3.0
 -- Versión de PHP: 8.2.18
 
@@ -20,6 +20,20 @@ SET time_zone = "+00:00";
 --
 -- Base de datos: `biblioteca_colegio`
 --
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `cd`
+--
+
+DROP TABLE IF EXISTS `cd`;
+CREATE TABLE IF NOT EXISTS `cd` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `NOMBRE` varchar(255) DEFAULT NULL,
+  `CANCIONES` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- --------------------------------------------------------
 
@@ -68,52 +82,20 @@ INSERT INTO `configuracion` (`id_configuracion`, `clave`, `valor`) VALUES
 -- --------------------------------------------------------
 
 --
--- Estructura de tabla para la tabla `detallesdocumento`
---
-
-DROP TABLE IF EXISTS `detallesdocumento`;
-CREATE TABLE IF NOT EXISTS `detallesdocumento` (
-  `id_documento` int NOT NULL,
-  `campo` varchar(100) NOT NULL,
-  `valor` varchar(255) NOT NULL,
-  PRIMARY KEY (`id_documento`,`campo`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
--- --------------------------------------------------------
-
---
--- Estructura de tabla para la tabla `documentos`
---
-
-DROP TABLE IF EXISTS `documentos`;
-CREATE TABLE IF NOT EXISTS `documentos` (
-  `id_documento` int NOT NULL AUTO_INCREMENT,
-  `tipo` varchar(50) DEFAULT NULL,
-  `titulo` varchar(255) NOT NULL,
-  `autor` varchar(255) NOT NULL,
-  `fecha_publicacion` date DEFAULT NULL,
-  `categoria` varchar(100) DEFAULT NULL,
-  `ejemplares` int DEFAULT '1',
-  PRIMARY KEY (`id_documento`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
--- --------------------------------------------------------
-
---
 -- Estructura de tabla para la tabla `libros`
 --
 
 DROP TABLE IF EXISTS `libros`;
 CREATE TABLE IF NOT EXISTS `libros` (
-  `id_libro` int NOT NULL AUTO_INCREMENT,
-  `titulo` varchar(255) NOT NULL,
-  `autor` varchar(255) NOT NULL,
-  `fecha_publicacion` date DEFAULT NULL,
-  `categoria` varchar(100) DEFAULT NULL,
-  `ejemplares` int DEFAULT '1',
-  `isbn` varchar(20) DEFAULT NULL,
-  `paginas` int DEFAULT NULL,
-  PRIMARY KEY (`id_libro`)
+  `id` varchar(10) NOT NULL,
+  `TITULO` varchar(255) DEFAULT NULL,
+  `AUTOR` varchar(255) DEFAULT NULL,
+  `FECHA_DE_PUBLICACION` date DEFAULT NULL,
+  `CATEGORIA` varchar(255) DEFAULT NULL,
+  `EJEMPLARES` varchar(255) DEFAULT NULL,
+  `ISBN` varchar(255) DEFAULT NULL,
+  `PAGINAS` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- --------------------------------------------------------
@@ -176,32 +158,13 @@ CREATE TABLE IF NOT EXISTS `productos` (
 
 DROP TABLE IF EXISTS `revistas`;
 CREATE TABLE IF NOT EXISTS `revistas` (
-  `id_revista` int NOT NULL AUTO_INCREMENT,
-  `titulo` varchar(255) NOT NULL,
-  `autor` varchar(255) NOT NULL,
-  `fecha_publicacion` date DEFAULT NULL,
-  `categoria` varchar(100) DEFAULT NULL,
-  `ejemplares` int DEFAULT '1',
-  `periodicidad` varchar(50) DEFAULT NULL,
-  PRIMARY KEY (`id_revista`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
--- --------------------------------------------------------
-
---
--- Estructura de tabla para la tabla `tesis`
---
-
-DROP TABLE IF EXISTS `tesis`;
-CREATE TABLE IF NOT EXISTS `tesis` (
-  `id_tesis` int NOT NULL AUTO_INCREMENT,
-  `titulo` varchar(255) NOT NULL,
-  `autor` varchar(255) NOT NULL,
-  `fecha_publicacion` date DEFAULT NULL,
-  `categoria` varchar(100) DEFAULT NULL,
-  `ejemplares` int DEFAULT '1',
-  `universidad` varchar(255) DEFAULT NULL,
-  PRIMARY KEY (`id_tesis`)
+  `id` int NOT NULL AUTO_INCREMENT,
+  `1` varchar(255) DEFAULT NULL,
+  `2` varchar(255) DEFAULT NULL,
+  `3` varchar(255) DEFAULT NULL,
+  `4` varchar(255) DEFAULT NULL,
+  `5` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- --------------------------------------------------------
@@ -212,24 +175,20 @@ CREATE TABLE IF NOT EXISTS `tesis` (
 
 DROP TABLE IF EXISTS `tiposdocumentos`;
 CREATE TABLE IF NOT EXISTS `tiposdocumentos` (
-  `id_tipo_documento` varchar(10) NOT NULL,
-  `nombre_tipo` varchar(100) NOT NULL,
-  `campos_requeridos` text NOT NULL,
-  PRIMARY KEY (`id_tipo_documento`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
--- --------------------------------------------------------
+  `id_documento` int NOT NULL AUTO_INCREMENT,
+  `nombre` varchar(255) NOT NULL,
+  `descripcion` text,
+  `fecha_creacion` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `estado` tinyint(1) DEFAULT '1',
+  PRIMARY KEY (`id_documento`)
+) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
--- Estructura de tabla para la tabla `tipos_productos`
+-- Volcado de datos para la tabla `tiposdocumentos`
 --
 
-DROP TABLE IF EXISTS `tipos_productos`;
-CREATE TABLE IF NOT EXISTS `tipos_productos` (
-  `id_tipo_producto` int NOT NULL AUTO_INCREMENT,
-  `tipo_producto` varchar(60) NOT NULL,
-  PRIMARY KEY (`id_tipo_producto`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+INSERT INTO `tiposdocumentos` (`id_documento`, `nombre`, `descripcion`, `fecha_creacion`, `estado`) VALUES
+(1, 'Libros', NULL, '2024-11-07 22:50:19', 1);
 
 -- --------------------------------------------------------
 
