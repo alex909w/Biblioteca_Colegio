@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1:3306
--- Tiempo de generación: 07-11-2024 a las 23:02:08
+-- Tiempo de generación: 08-11-2024 a las 18:01:42
 -- Versión del servidor: 8.3.0
 -- Versión de PHP: 8.2.18
 
@@ -20,41 +20,6 @@ SET time_zone = "+00:00";
 --
 -- Base de datos: `biblioteca_colegio`
 --
-
--- --------------------------------------------------------
-
---
--- Estructura de tabla para la tabla `cd`
---
-
-DROP TABLE IF EXISTS `cd`;
-CREATE TABLE IF NOT EXISTS `cd` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `NOMBRE` varchar(255) DEFAULT NULL,
-  `CANCIONES` varchar(255) DEFAULT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
--- --------------------------------------------------------
-
---
--- Estructura de tabla para la tabla `cds`
---
-
-DROP TABLE IF EXISTS `cds`;
-CREATE TABLE IF NOT EXISTS `cds` (
-  `id_cd` int NOT NULL AUTO_INCREMENT,
-  `titulo` varchar(255) NOT NULL,
-  `autor` varchar(255) NOT NULL,
-  `fecha_publicacion` date DEFAULT NULL,
-  `categoria` varchar(100) DEFAULT NULL,
-  `ejemplares` int DEFAULT '1',
-  `artista` varchar(255) DEFAULT NULL,
-  `genero` varchar(100) DEFAULT NULL,
-  `duracion` int DEFAULT NULL,
-  `numero_canciones` int DEFAULT NULL,
-  PRIMARY KEY (`id_cd`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- --------------------------------------------------------
 
@@ -92,11 +57,18 @@ CREATE TABLE IF NOT EXISTS `libros` (
   `AUTOR` varchar(255) DEFAULT NULL,
   `FECHA_DE_PUBLICACION` date DEFAULT NULL,
   `CATEGORIA` varchar(255) DEFAULT NULL,
-  `EJEMPLARES` varchar(255) DEFAULT NULL,
+  `EJEMPLARES` int DEFAULT NULL,
   `ISBN` varchar(255) DEFAULT NULL,
-  `PAGINAS` varchar(255) DEFAULT NULL,
+  `PAGINAS` int DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Volcado de datos para la tabla `libros`
+--
+
+INSERT INTO `libros` (`id`, `TITULO`, `AUTOR`, `FECHA_DE_PUBLICACION`, `CATEGORIA`, `EJEMPLARES`, `ISBN`, `PAGINAS`) VALUES
+('LIB001', 'aaa', 'aaa', '2024-11-08', 'aaa', 125, 'aaaaa', 12);
 
 -- --------------------------------------------------------
 
@@ -153,23 +125,6 @@ CREATE TABLE IF NOT EXISTS `productos` (
 -- --------------------------------------------------------
 
 --
--- Estructura de tabla para la tabla `revistas`
---
-
-DROP TABLE IF EXISTS `revistas`;
-CREATE TABLE IF NOT EXISTS `revistas` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `1` varchar(255) DEFAULT NULL,
-  `2` varchar(255) DEFAULT NULL,
-  `3` varchar(255) DEFAULT NULL,
-  `4` varchar(255) DEFAULT NULL,
-  `5` varchar(255) DEFAULT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
--- --------------------------------------------------------
-
---
 -- Estructura de tabla para la tabla `tiposdocumentos`
 --
 
@@ -188,7 +143,7 @@ CREATE TABLE IF NOT EXISTS `tiposdocumentos` (
 --
 
 INSERT INTO `tiposdocumentos` (`id_documento`, `nombre`, `descripcion`, `fecha_creacion`, `estado`) VALUES
-(1, 'Libros', NULL, '2024-11-07 22:50:19', 1);
+(1, 'Libros', NULL, '2024-11-08 17:54:26', 1);
 
 -- --------------------------------------------------------
 

@@ -7,8 +7,20 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 public class TipoDocumentoDAO {
+
+    public static final Map<String, String> abreviaturaToTablaMap = new HashMap<>();
+
+    static {
+        abreviaturaToTablaMap.put("LIB", "Libros");
+        abreviaturaToTablaMap.put("REV", "Revistas");
+        abreviaturaToTablaMap.put("CDS", "CDs");
+        abreviaturaToTablaMap.put("TES", "Tesis");
+        // Agrega aquí otras categorías según sea necesario
+    }
 
     public ArrayList<String> obtenerTiposDocumentos() throws SQLException {
         ArrayList<String> tiposDocumentos = new ArrayList<>();
@@ -39,38 +51,46 @@ public class TipoDocumentoDAO {
         }
     }
 
-public void crearTablaParaDocumento(String nombreTabla, ArrayList<String> columnas) throws SQLException {
-    // Crear la estructura SQL para crear la tabla
+    public void crearTablaParaDocumento(String nombreTabla, ArrayList<String> columnas) throws SQLException {
     StringBuilder consulta = new StringBuilder("CREATE TABLE `" + nombreTabla + "` (");
-    consulta.append("id VARCHAR(10) PRIMARY KEY"); // Usamos VARCHAR para el campo 'id' con longitud 10
+    consulta.append("id VARCHAR(10) PRIMARY KEY"); // Campo ID como VARCHAR(10)
 
-    // Añadir las columnas especificadas
     for (String columna : columnas) {
         String nombreColumnaSQL = columna.trim().toUpperCase().replace(" ", "_");
-        if (nombreColumnaSQL.toLowerCase().contains("fecha")) {
-            consulta.append(", `").append(nombreColumnaSQL).append("` DATE");
-        } else {
-            consulta.append(", `").append(nombreColumnaSQL).append("` VARCHAR(255)");
-        }
+
+        // Determina el tipo de columna
+        String tipoDato = determinarTipoDeDato(columna);
+
+        consulta.append(", `").append(nombreColumnaSQL).append("` ").append(tipoDato);
     }
 
     consulta.append(")");
 
-    // Ejecutar la creación de la tabla
     try (Connection conexion = ConexionBaseDatos.getConexion();
          Statement statement = conexion.createStatement()) {
-
         statement.executeUpdate(consulta.toString());
         System.out.println("Tabla creada exitosamente: " + nombreTabla);
-
     } catch (SQLException e) {
         System.err.println("Error al crear la tabla para el documento: " + e.getMessage());
         throw e;
     }
 }
 
+// Método para determinar el tipo de datos de la columna
+private String determinarTipoDeDato(String nombreColumna) {
+    nombreColumna = nombreColumna.toLowerCase();
 
-    
+    if (nombreColumna.contains("fecha") || nombreColumna.contains("date")) {
+        return "DATE";
+    } else if (nombreColumna.contains("num") || nombreColumna.contains("cantidad") || 
+               nombreColumna.contains("ejemplares") || nombreColumna.contains("paginas")) {
+        return "INT";
+    } else {
+        return "VARCHAR(255)";
+    }
+}
+
+
     public boolean existeTabla(String nombreTabla) throws SQLException {
         String consulta = "SHOW TABLES LIKE ?";
         try (Connection conexion = ConexionBaseDatos.getConexion();
@@ -81,7 +101,7 @@ public void crearTablaParaDocumento(String nombreTabla, ArrayList<String> column
         }
     }
 
-  public void eliminarTabla(String nombreTabla) throws SQLException {
+    public void eliminarTabla(String nombreTabla) throws SQLException {
         String eliminacion = "DROP TABLE IF EXISTS " + nombreTabla;
         try (Connection conexion = ConexionBaseDatos.getConexion();
              PreparedStatement statement = conexion.prepareStatement(eliminacion)) {
@@ -89,7 +109,7 @@ public void crearTablaParaDocumento(String nombreTabla, ArrayList<String> column
         }
     }
 
-  public ArrayList<String> obtenerColumnasDeTabla(String nombreTabla) throws SQLException {
+    public ArrayList<String> obtenerColumnasDeTabla(String nombreTabla) throws SQLException {
         ArrayList<String> columnas = new ArrayList<>();
         String consulta = "SHOW COLUMNS FROM " + nombreTabla;
         try (Connection conexion = ConexionBaseDatos.getConexion();
@@ -119,40 +139,68 @@ public void crearTablaParaDocumento(String nombreTabla, ArrayList<String> column
             }
         }
     }
-    
-    // Método para obtener el número de documentos del tipo especificado
-    public int obtenerContadorParaDocumento(String tipoDocumento) throws SQLException {
-        String consulta = "SELECT COUNT(*) FROM " + tipoDocumento;
+
+    public int obtenerNumeroActual(String tipoDocumento) {
+        String nombreTabla = abreviaturaToTablaMap.get(tipoDocumento); // Usa el nombre completo de la tabla
+        if (nombreTabla == null) {
+            System.err.println("Error: no se encontró la tabla para la abreviatura " + tipoDocumento);
+            return 0;
+        }
+        int numeroActual = 0;
+        String consulta = "SELECT MAX(CAST(SUBSTRING(id, 4) AS UNSIGNED)) AS max_id FROM " + nombreTabla;
+
         try (Connection conexion = ConexionBaseDatos.getConexion();
-             PreparedStatement statement = conexion.prepareStatement(consulta);
-             ResultSet resultSet = statement.executeQuery()) {
+             PreparedStatement statement = conexion.prepareStatement(consulta)) {
+            ResultSet resultSet = statement.executeQuery();
+
             if (resultSet.next()) {
-                return resultSet.getInt(1);
+                numeroActual = resultSet.getInt("max_id");
+            }
+
+        } catch (SQLException e) {
+            System.err.println("Error al obtener el número actual para el tipo de documento " + tipoDocumento + ": " + e.getMessage());
+        }
+
+        return numeroActual;
+    }
+
+    public ArrayList<String> obtenerIDsPorCategoria(String categoria) throws SQLException {
+        String nombreTabla = abreviaturaToTablaMap.get(categoria); // Usa el nombre completo de la tabla
+        if (nombreTabla == null) {
+            System.err.println("Error: no se encontró la tabla para la categoría " + categoria);
+            return new ArrayList<>();
+        }
+        
+        ArrayList<String> ids = new ArrayList<>();
+        String sql = "SELECT id FROM " + nombreTabla;
+
+        try (Connection conexion = ConexionBaseDatos.getConexion();
+             PreparedStatement statement = conexion.prepareStatement(sql);
+             ResultSet resultSet = statement.executeQuery()) {
+
+            while (resultSet.next()) {
+                ids.add(resultSet.getString("id"));
             }
         }
-        return 0;
+        return ids;
     }
-
-   public int obtenerNumeroActual(String tipoDocumento) {
-    int numeroActual = 0;
-    String consulta = "SELECT MAX(CAST(SUBSTRING(id_documento, 4) AS UNSIGNED)) AS max_id FROM " + tipoDocumento;
-
+    
+    public ArrayList<Map<String, String>> obtenerColumnasInfo(String nombreTabla) throws SQLException {
+    ArrayList<Map<String, String>> columnasInfo = new ArrayList<>();
+    String consulta = "SHOW COLUMNS FROM " + nombreTabla;
+    
     try (Connection conexion = ConexionBaseDatos.getConexion();
-         PreparedStatement statement = conexion.prepareStatement(consulta)) {
+         PreparedStatement statement = conexion.prepareStatement(consulta);
+         ResultSet resultSet = statement.executeQuery()) {
 
-        ResultSet resultSet = statement.executeQuery();
-
-        if (resultSet.next()) {
-            numeroActual = resultSet.getInt("max_id");
+        while (resultSet.next()) {
+            Map<String, String> columna = new HashMap<>();
+            columna.put("Field", resultSet.getString("Field"));
+            columna.put("Type", resultSet.getString("Type"));
+            columnasInfo.add(columna);
         }
-
-    } catch (SQLException e) {
-        System.err.println("Error al obtener el número actual para el tipo de documento " + tipoDocumento + ": " + e.getMessage());
     }
-
-    return numeroActual;
+    return columnasInfo;
 }
 
-    
-    
 }

@@ -2,15 +2,21 @@ package com.biblioteca.acciones;
 
 import com.biblioteca.controladores.DocumentoController;
 import com.biblioteca.validaciones.TipoDocumentoDAO;
+import org.jdatepicker.impl.JDatePickerImpl;
+import org.jdatepicker.impl.UtilDateModel;
+import org.jdatepicker.impl.JDatePanelImpl;
+import org.jdatepicker.impl.SqlDateModel;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.*;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.Properties;
 import java.sql.SQLException;
+import java.text.ParseException;
+import java.util.Date;
 
 class DateLabelFormatter extends JFormattedTextField.AbstractFormatter {
     private String datePattern = "yyyy-MM-dd";
@@ -37,7 +43,7 @@ public class GestionDocumentos extends JFrame {
 
     private JPanel panelDinamico;
     private JButton btnGuardar, btnLimpiar, btnVolver, btnCrearNuevoTipo;
-    private JTextField idGeneradoField; // Campo de texto para el ID autogenerado
+    private JTextField idGeneradoField;
 
     public GestionDocumentos() {
         setTitle("Gestión de Documentos");
@@ -80,7 +86,7 @@ public class GestionDocumentos extends JFrame {
         add(panelTop, BorderLayout.NORTH);
 
         panelFormulario = new JPanel(new CardLayout());
-        panelDinamico = new JPanel(new GridBagLayout()); // Panel para los campos dinámicos
+        panelDinamico = new JPanel(new GridBagLayout());
         panelFormulario.add(panelDinamico, "Dinamico");
         add(panelFormulario, BorderLayout.CENTER);
 
@@ -105,46 +111,40 @@ public class GestionDocumentos extends JFrame {
     private void actualizarFormularioYID() {
         String tipoDocumento = (String) tipoDocumentoComboBox.getSelectedItem();
         if (tipoDocumento != null && !tipoDocumento.isEmpty()) {
-            cargarFormularioParaDocumento(tipoDocumento); // Cargar campos adicionales
+            cargarFormularioParaDocumento(tipoDocumento);
             String nuevoID = generarIDParaDocumento(tipoDocumento);
-            idGeneradoField.setText(nuevoID); // Muestra el ID generado
+            idGeneradoField.setText(nuevoID);
         } else {
             JOptionPane.showMessageDialog(this, "No hay formularios disponibles. Por favor, cree uno nuevo.");
         }
     }
 
-   private String generarIDParaDocumento(String tipoDocumento) {
-    String prefix = tipoDocumento.substring(0, 3).toUpperCase();
-    int numero = 0;
+    private String generarIDParaDocumento(String tipoDocumento) {
+        String prefix = tipoDocumento.substring(0, 3).toUpperCase();
+        int numero = 0;
 
-    try {
-        // Verifica si la tabla existe; si no, la crea y devuelve el primer ID
-        if (!tipoDocumentoDAO.existeTabla(tipoDocumento)) {
-            ArrayList<String> columnas = new ArrayList<>();
-            columnas.add("Nombre");
-            columnas.add("Descripción");
-
-            tipoDocumentoDAO.crearTablaParaDocumento(tipoDocumento, columnas);
+        try {
+            if (!tipoDocumentoDAO.existeTabla(tipoDocumento)) {
+                ArrayList<String> columnas = new ArrayList<>();
+                columnas.add("Nombre");
+                columnas.add("Descripción");
+                tipoDocumentoDAO.crearTablaParaDocumento(tipoDocumento, columnas);
+                return prefix + "001";
+            }
+            numero = tipoDocumentoDAO.obtenerNumeroActual(prefix);
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(this, "Error al obtener el ID: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
             return prefix + "001";
         }
-
-        // Intenta obtener el último número en la secuencia de IDs
-        numero = tipoDocumentoDAO.obtenerNumeroActual(prefix);
-
-    } catch (SQLException e) {
-        JOptionPane.showMessageDialog(this, "Error al obtener el ID: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-        return prefix + "001"; // Retorna el primer ID en caso de error
+        return prefix + String.format("%03d", numero + 1);
     }
-    // Si no se encuentra ningún ID previo, comienza la numeración con el primero
-    return prefix + String.format("%03d", numero + 1);
-}
 
-
-   private void cargarFormularioParaDocumento(String nombreDocumento) {
-    panelDinamico.removeAll(); // Limpiar el panel antes de agregar nuevos campos
-    ArrayList<String> columnas;
+    private void cargarFormularioParaDocumento(String nombreDocumento) {
+    panelDinamico.removeAll();
+    ArrayList<Map<String, String>> columnasInfo;
     try {
-        columnas = tipoDocumentoDAO.obtenerColumnasDeTabla(nombreDocumento); // Obtiene las columnas de la tabla registrada
+        // Obtener columnas con su tipo de datos
+        columnasInfo = tipoDocumentoDAO.obtenerColumnasInfo(nombreDocumento);
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(5, 5, 5, 5);
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -159,24 +159,44 @@ public class GestionDocumentos extends JFrame {
         idGeneradoField.setEditable(false);
         panelDinamico.add(idGeneradoField, gbc);
 
-        // Agregar los demás campos, excluyendo cualquier columna que se llame "id"
+        // Generar campos para cada columna según el tipo de dato
         int row = 1;
-        for (String columna : columnas) {
+        for (Map<String, String> columnInfo : columnasInfo) {
+            String columna = columnInfo.get("Field");
+            String tipoDato = columnInfo.get("Type");
+
             if (columna.equalsIgnoreCase("id")) {
-                continue; // Omite el campo "id"
+                continue;
             }
+
             gbc.gridx = 0;
             gbc.gridy = row;
             panelDinamico.add(new JLabel(columna + ":"), gbc);
 
             gbc.gridx = 1;
-            JTextField campoTexto;
-            if (columna.toLowerCase().contains("fecha")) {
-                campoTexto = new JFormattedTextField(new DateLabelFormatter());
+            if (tipoDato.toLowerCase().contains("int")) {
+                // Campo de texto para números
+                JFormattedTextField campoNumero = new JFormattedTextField();
+                campoNumero.setColumns(15);
+                campoNumero.setValue(0); // valor inicial
+                panelDinamico.add(campoNumero, gbc);
+
+            } else if (tipoDato.toLowerCase().contains("date")) {
+                // Campo para fechas
+                UtilDateModel model = new UtilDateModel();
+                Properties p = new Properties();
+                p.put("text.today", "Hoy");
+                p.put("text.month", "Mes");
+                p.put("text.year", "Año");
+                JDatePanelImpl datePanel = new JDatePanelImpl(model, p);
+                JDatePickerImpl datePicker = new JDatePickerImpl(datePanel, new DateLabelFormatter());
+                panelDinamico.add(datePicker, gbc);
+
             } else {
-                campoTexto = new JTextField(15);
+                // Campo de texto para datos de tipo string o cualquier otro tipo
+                JTextField campoTexto = new JTextField(15);
+                panelDinamico.add(campoTexto, gbc);
             }
-            panelDinamico.add(campoTexto, gbc);
             row++;
         }
         panelDinamico.revalidate();
@@ -201,6 +221,7 @@ public class GestionDocumentos extends JFrame {
             public void mouseEntered(MouseEvent e) {
                 boton.setBackground(colorFondo.darker());
             }
+
             @Override
             public void mouseExited(MouseEvent e) {
                 boton.setBackground(colorFondo);
@@ -214,32 +235,48 @@ public class GestionDocumentos extends JFrame {
         return boton;
     }
 
-    private void guardarDocumento() {
-        String tipoDocumento = (String) tipoDocumentoComboBox.getSelectedItem();
-        ArrayList<String> datos = new ArrayList<>();
-        datos.add(idGeneradoField.getText());
+    
+   // GestionDocumentos.java
+private void guardarDocumento() {
+    String tipoDocumento = (String) tipoDocumentoComboBox.getSelectedItem();
+    ArrayList<String> datos = new ArrayList<>();
+    ArrayList<String> tiposColumnas = new ArrayList<>();
 
-        if (tipoDocumento != null && !tipoDocumento.isEmpty()) {
-            for (Component comp : panelDinamico.getComponents()) {
-                if (comp instanceof JTextField && comp != idGeneradoField) {
-                    datos.add(((JTextField) comp).getText().trim());
-                } else if (comp instanceof JFormattedTextField) {
-                    datos.add(((JFormattedTextField) comp).getText().trim());
-                }
+    datos.add(idGeneradoField.getText());
+    tiposColumnas.add("varchar"); // Suponiendo que el ID es VARCHAR
+
+    if (tipoDocumento != null && !tipoDocumento.isEmpty()) {
+        for (Component comp : panelDinamico.getComponents()) {
+            if (comp instanceof JTextField && comp != idGeneradoField) {
+                datos.add(((JTextField) comp).getText().trim());
+                tiposColumnas.add("varchar"); // Suponiendo VARCHAR para texto
+            } else if (comp instanceof JDatePickerImpl) {
+                JDatePickerImpl datePicker = (JDatePickerImpl) comp;
+                Date selectedDate = (Date) datePicker.getModel().getValue();
+                datos.add(new SimpleDateFormat("yyyy-MM-dd").format(selectedDate));
+                tiposColumnas.add("date"); // Especifica DATE para columnas de fecha
             }
         }
-
-        boolean exito = controlador.guardarDocumento(tipoDocumento, datos.toArray(new String[0]));
-        JOptionPane.showMessageDialog(this, exito ? "Documento guardado exitosamente." : "Error al guardar el documento.");
-        if (exito) limpiarFormulario();
     }
 
-    private void limpiarFormulario() {
+    boolean exito = controlador.guardarDocumento(tipoDocumento, datos.toArray(new String[0]), tiposColumnas.toArray(new String[0]));
+    JOptionPane.showMessageDialog(this, exito ? "Documento guardado exitosamente." : "Error al guardar el documento.");
+    
+    if (exito) {
+        limpiarFormulario();
+        actualizarFormularioYID();
+    }
+}
+
+    
+   
+
+     private void limpiarFormulario() {
         for (Component comp : panelDinamico.getComponents()) {
-            if (comp instanceof JTextField) {
+            if (comp instanceof JTextField && comp != idGeneradoField) {
                 ((JTextField) comp).setText("");
-            } else if (comp instanceof JFormattedTextField) {
-                ((JFormattedTextField) comp).setText("");
+            } else if (comp instanceof JDatePickerImpl) {
+                ((JDatePickerImpl) comp).getModel().setValue(null);
             }
         }
     }
