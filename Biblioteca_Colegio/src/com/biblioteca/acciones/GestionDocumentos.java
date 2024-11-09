@@ -112,7 +112,7 @@ public class GestionDocumentos extends JFrame {
     }
 
     private String generarIDParaDocumento(String tipoDocumento) {
-        String prefix = tipoDocumento.substring(0, 3).toUpperCase();
+        String prefix = tipoDocumento.substring(0, Math.min(3, tipoDocumento.length())).toUpperCase();
         int numero = 0;
 
         try {
@@ -140,20 +140,26 @@ public class GestionDocumentos extends JFrame {
             gbc.insets = new Insets(10, 10, 10, 10);
             gbc.fill = GridBagConstraints.HORIZONTAL;
 
-            // Agregar el campo de ID generado automáticamente
+            int row = 0;
+
+            // Agregar el campo de ID generado automáticamente en la primera fila
             gbc.gridx = 0;
-            gbc.gridy = 0;
+            gbc.gridy = row;
+            gbc.gridwidth = 1; // Cada etiqueta y campo ocupa una celda
+
             panelDinamico.add(new JLabel("ID Documento:"), gbc);
 
             gbc.gridx = 1;
-            idGeneradoField = new JTextField(20); // Aumentado el tamaño del campo
+            idGeneradoField = new JTextField(15);
             idGeneradoField.setEditable(false);
-            idGeneradoField.setFont(new Font("Arial", Font.PLAIN, 16)); // Fuente más grande
+            idGeneradoField.setFont(new Font("Arial", Font.PLAIN, 16));
             panelDinamico.add(idGeneradoField, gbc);
 
-            // Generar campos para cada columna según el tipo de dato
-            int row = 1;
-            for (Map<String, String> columnInfo : columnasInfo) {
+            row++;
+
+            // Preparar para agregar los pares de campos en dos columnas
+            for (int i = 0; i < columnasInfo.size(); i++) {
+                Map<String, String> columnInfo = columnasInfo.get(i);
                 String columna = columnInfo.get("Field");
                 String tipoDato = columnInfo.get("Type");
 
@@ -161,40 +167,68 @@ public class GestionDocumentos extends JFrame {
                     continue;
                 }
 
+                // Primera columna del par
                 gbc.gridx = 0;
                 gbc.gridy = row;
                 panelDinamico.add(new JLabel(columna + ":"), gbc);
 
                 gbc.gridx = 1;
-                if (tipoDato.toLowerCase().contains("int")) {
-                    JFormattedTextField campoNumero = new JFormattedTextField();
-                    campoNumero.setColumns(20); // Aumentado el tamaño
-                    campoNumero.setValue(0); // valor inicial
-                    campoNumero.setFont(new Font("Arial", Font.PLAIN, 16)); // Fuente más grande
-                    panelDinamico.add(campoNumero, gbc);
+                Component campo = crearCampoPorTipo(tipoDato);
+                panelDinamico.add(campo, gbc);
 
-                } else if (tipoDato.toLowerCase().contains("date")) {
-                    UtilDateModel model = new UtilDateModel();
-                    Properties p = new Properties();
-                    p.put("text.today", "Hoy");
-                    p.put("text.month", "Mes");
-                    p.put("text.year", "Año");
-                    JDatePanelImpl datePanel = new JDatePanelImpl(model, p);
-                    JDatePickerImpl datePicker = new JDatePickerImpl(datePanel, new DateLabelFormatter());
-                    datePicker.setPreferredSize(new Dimension(200, 40)); // Aumentado el tamaño
-                    panelDinamico.add(datePicker, gbc);
+                // Segunda columna del par (si existe)
+                if (i + 1 < columnasInfo.size()) {
+                    Map<String, String> nextColumnInfo = columnasInfo.get(i + 1);
+                    String nextColumna = nextColumnInfo.get("Field");
+                    String nextTipoDato = nextColumnInfo.get("Type");
 
+                    gbc.gridx = 2;
+                    panelDinamico.add(new JLabel(nextColumna + ":"), gbc);
+
+                    gbc.gridx = 3;
+                    Component nextCampo = crearCampoPorTipo(nextTipoDato);
+                    panelDinamico.add(nextCampo, gbc);
+
+                    row++;
+                    i++; // Incrementar adicionalmente para manejar el siguiente par
                 } else {
-                    JTextField campoTexto = new JTextField(20); // Aumentado el tamaño
-                    campoTexto.setFont(new Font("Arial", Font.PLAIN, 16)); // Fuente más grande
-                    panelDinamico.add(campoTexto, gbc);
+                    // Si no hay par, dejar el último campo alineado a la izquierda
+                    gbc.gridx = 2;
+                    gbc.gridwidth = 2; // Ocupa las dos celdas restantes
+                    panelDinamico.add(new JLabel(""), gbc); // Espacio vacío
+                    gbc.gridwidth = 1; // Resetear el gridwidth
+                    row++;
                 }
-                row++;
             }
+
             panelDinamico.revalidate();
             panelDinamico.repaint();
         } catch (SQLException e) {
             JOptionPane.showMessageDialog(this, "Error al cargar el formulario para el documento: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private Component crearCampoPorTipo(String tipoDato) {
+        if (tipoDato.toLowerCase().contains("int")) {
+            JFormattedTextField campoNumero = new JFormattedTextField();
+            campoNumero.setColumns(15);
+            campoNumero.setValue(0);
+            campoNumero.setFont(new Font("Arial", Font.PLAIN, 16));
+            return campoNumero;
+        } else if (tipoDato.toLowerCase().contains("date")) {
+            UtilDateModel model = new UtilDateModel();
+            Properties p = new Properties();
+            p.put("text.today", "Hoy");
+            p.put("text.month", "Mes");
+            p.put("text.year", "Año");
+            JDatePanelImpl datePanel = new JDatePanelImpl(model, p);
+            JDatePickerImpl datePicker = new JDatePickerImpl(datePanel, new DateLabelFormatter());
+            datePicker.setPreferredSize(new Dimension(200, 30));
+            return datePicker;
+        } else {
+            JTextField campoTexto = new JTextField(15);
+            campoTexto.setFont(new Font("Arial", Font.PLAIN, 16));
+            return campoTexto;
         }
     }
 
@@ -221,6 +255,7 @@ public class GestionDocumentos extends JFrame {
         ArrayList<String> datos = new ArrayList<>();
         ArrayList<String> tiposColumnas = new ArrayList<>();
 
+        // Agregar el ID generado automáticamente
         datos.add(idGeneradoField.getText());
         tiposColumnas.add("varchar"); // Suponiendo que el ID es VARCHAR
 
@@ -241,6 +276,24 @@ public class GestionDocumentos extends JFrame {
                 }
             }
         }
+
+        // **Eliminar los campos predeterminados**
+        // datos.add("Sección A, Estantería 3, Nivel 2"); // UBICACION_FISICA
+        // tiposColumnas.add("varchar"); // Tipo de dato correspondiente
+
+        // datos.add("5"); // CANTIDAD_TOTAL
+        // tiposColumnas.add("int"); // Tipo de dato correspondiente
+
+        // datos.add("3"); // CANTIDAD_DISPONIBLE
+        // tiposColumnas.add("int"); // Tipo de dato correspondiente
+
+        // datos.add("Bueno"); // ESTADO_DEL_DOCUMENTO
+        // tiposColumnas.add("varchar"); // Tipo de dato correspondiente
+
+        // datos.add("Programación, Java, Orientación a Objetos"); // PALABRAS_CLAVE
+        // tiposColumnas.add("varchar"); // Tipo de dato correspondiente
+
+        System.out.println("Datos a guardar: " + Arrays.toString(datos.toArray()));
 
         boolean exito = controlador.guardarDocumento(tipoDocumento, datos.toArray(new String[0]), tiposColumnas.toArray(new String[0]));
         JOptionPane.showMessageDialog(this, exito ? "Documento guardado exitosamente." : "Error al guardar el documento.");

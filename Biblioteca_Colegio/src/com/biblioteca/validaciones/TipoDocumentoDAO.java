@@ -52,44 +52,46 @@ public class TipoDocumentoDAO {
     }
 
     public void crearTablaParaDocumento(String nombreTabla, ArrayList<String> columnas) throws SQLException {
-    StringBuilder consulta = new StringBuilder("CREATE TABLE `" + nombreTabla + "` (");
-    consulta.append("id VARCHAR(10) PRIMARY KEY"); // Campo ID como VARCHAR(10)
+        StringBuilder consulta = new StringBuilder("CREATE TABLE `" + nombreTabla + "` (");
 
-    for (String columna : columnas) {
-        String nombreColumnaSQL = columna.trim().toUpperCase().replace(" ", "_");
+        // Definir 'id' como VARCHAR y establecerlo como PRIMARY KEY
+        consulta.append("`id` VARCHAR(50) PRIMARY KEY, ");
 
-        // Determina el tipo de columna
-        String tipoDato = determinarTipoDeDato(columna);
+        // Crear las columnas definidas por el usuario
+        for (String columna : columnas) {
+            String nombreColumnaSQL = columna.trim().toUpperCase().replace(" ", "_");
+            String tipoDato = determinarTipoDeDato(columna);
+            consulta.append("`").append(nombreColumnaSQL).append("` ").append(tipoDato).append(", ");
+        }
 
-        consulta.append(", `").append(nombreColumnaSQL).append("` ").append(tipoDato);
+        // Eliminar la última coma y espacio
+        consulta.setLength(consulta.length() - 2);
+
+        consulta.append(")");
+
+        try (Connection conexion = ConexionBaseDatos.getConexion();
+             Statement statement = conexion.createStatement()) {
+            statement.executeUpdate(consulta.toString());
+            System.out.println("Tabla creada exitosamente: " + nombreTabla);
+        } catch (SQLException e) {
+            System.err.println("Error al crear la tabla para el documento: " + e.getMessage());
+            throw e;
+        }
     }
 
-    consulta.append(")");
+    // Método para determinar el tipo de datos de la columna
+    private String determinarTipoDeDato(String nombreColumna) {
+        nombreColumna = nombreColumna.toLowerCase();
 
-    try (Connection conexion = ConexionBaseDatos.getConexion();
-         Statement statement = conexion.createStatement()) {
-        statement.executeUpdate(consulta.toString());
-        System.out.println("Tabla creada exitosamente: " + nombreTabla);
-    } catch (SQLException e) {
-        System.err.println("Error al crear la tabla para el documento: " + e.getMessage());
-        throw e;
+        if (nombreColumna.contains("fecha") || nombreColumna.contains("date")) {
+            return "DATE";
+        } else if (nombreColumna.contains("num") || nombreColumna.contains("cantidad") || 
+                   nombreColumna.contains("ejemplares") || nombreColumna.contains("paginas")) {
+            return "INT";
+        } else {
+            return "VARCHAR(255)";
+        }
     }
-}
-
-// Método para determinar el tipo de datos de la columna
-private String determinarTipoDeDato(String nombreColumna) {
-    nombreColumna = nombreColumna.toLowerCase();
-
-    if (nombreColumna.contains("fecha") || nombreColumna.contains("date")) {
-        return "DATE";
-    } else if (nombreColumna.contains("num") || nombreColumna.contains("cantidad") || 
-               nombreColumna.contains("ejemplares") || nombreColumna.contains("paginas")) {
-        return "INT";
-    } else {
-        return "VARCHAR(255)";
-    }
-}
-
 
     public boolean existeTabla(String nombreTabla) throws SQLException {
         String consulta = "SHOW TABLES LIKE ?";
@@ -102,7 +104,7 @@ private String determinarTipoDeDato(String nombreColumna) {
     }
 
     public void eliminarTabla(String nombreTabla) throws SQLException {
-        String eliminacion = "DROP TABLE IF EXISTS " + nombreTabla;
+        String eliminacion = "DROP TABLE IF EXISTS `" + nombreTabla + "`"; // Escapar el nombre de la tabla
         try (Connection conexion = ConexionBaseDatos.getConexion();
              PreparedStatement statement = conexion.prepareStatement(eliminacion)) {
             statement.executeUpdate();
@@ -111,7 +113,7 @@ private String determinarTipoDeDato(String nombreColumna) {
 
     public ArrayList<String> obtenerColumnasDeTabla(String nombreTabla) throws SQLException {
         ArrayList<String> columnas = new ArrayList<>();
-        String consulta = "SHOW COLUMNS FROM " + nombreTabla;
+        String consulta = "SHOW COLUMNS FROM `" + nombreTabla + "`"; // Escapar el nombre de la tabla
         try (Connection conexion = ConexionBaseDatos.getConexion();
              PreparedStatement statement = conexion.prepareStatement(consulta);
              ResultSet resultSet = statement.executeQuery()) {
@@ -125,13 +127,17 @@ private String determinarTipoDeDato(String nombreColumna) {
     public void actualizarColumnasTabla(String nombreTabla, ArrayList<String> nuevasColumnas) throws SQLException {
         ArrayList<String> columnasActuales = obtenerColumnasDeTabla(nombreTabla);
 
+        if (columnasActuales.size() != nuevasColumnas.size()) {
+            throw new SQLException("El número de nuevas columnas no coincide con el número de columnas actuales.");
+        }
+
         try (Connection conexion = ConexionBaseDatos.getConexion()) {
             for (int i = 0; i < nuevasColumnas.size(); i++) {
                 String columnaActual = columnasActuales.get(i);
                 String nuevaColumna = nuevasColumnas.get(i);
 
                 if (!columnaActual.equals(nuevaColumna)) {
-                    String consulta = "ALTER TABLE " + nombreTabla + " CHANGE " + columnaActual + " " + nuevaColumna + " VARCHAR(255)";
+                    String consulta = "ALTER TABLE `" + nombreTabla + "` CHANGE `" + columnaActual + "` `" + nuevaColumna + "` VARCHAR(255)";
                     try (PreparedStatement statement = conexion.prepareStatement(consulta)) {
                         statement.executeUpdate();
                     }
@@ -147,7 +153,8 @@ private String determinarTipoDeDato(String nombreColumna) {
             return 0;
         }
         int numeroActual = 0;
-        String consulta = "SELECT MAX(CAST(SUBSTRING(id, 4) AS UNSIGNED)) AS max_id FROM " + nombreTabla;
+        // Asumiendo que el prefijo tiene 3 caracteres, ajustar si es diferente
+        String consulta = "SELECT MAX(CAST(SUBSTRING(`id`, 4) AS UNSIGNED)) AS max_id FROM `" + nombreTabla + "`";
 
         try (Connection conexion = ConexionBaseDatos.getConexion();
              PreparedStatement statement = conexion.prepareStatement(consulta)) {
@@ -172,7 +179,7 @@ private String determinarTipoDeDato(String nombreColumna) {
         }
         
         ArrayList<String> ids = new ArrayList<>();
-        String sql = "SELECT id FROM " + nombreTabla;
+        String sql = "SELECT `id` FROM `" + nombreTabla + "`";
 
         try (Connection conexion = ConexionBaseDatos.getConexion();
              PreparedStatement statement = conexion.prepareStatement(sql);
@@ -186,21 +193,20 @@ private String determinarTipoDeDato(String nombreColumna) {
     }
     
     public ArrayList<Map<String, String>> obtenerColumnasInfo(String nombreTabla) throws SQLException {
-    ArrayList<Map<String, String>> columnasInfo = new ArrayList<>();
-    String consulta = "SHOW COLUMNS FROM " + nombreTabla;
-    
-    try (Connection conexion = ConexionBaseDatos.getConexion();
-         PreparedStatement statement = conexion.prepareStatement(consulta);
-         ResultSet resultSet = statement.executeQuery()) {
+        ArrayList<Map<String, String>> columnasInfo = new ArrayList<>();
+        String consulta = "SHOW COLUMNS FROM `" + nombreTabla + "`";
+        
+        try (Connection conexion = ConexionBaseDatos.getConexion();
+             PreparedStatement statement = conexion.prepareStatement(consulta);
+             ResultSet resultSet = statement.executeQuery()) {
 
-        while (resultSet.next()) {
-            Map<String, String> columna = new HashMap<>();
-            columna.put("Field", resultSet.getString("Field"));
-            columna.put("Type", resultSet.getString("Type"));
-            columnasInfo.add(columna);
+            while (resultSet.next()) {
+                Map<String, String> columna = new HashMap<>();
+                columna.put("Field", resultSet.getString("Field"));
+                columna.put("Type", resultSet.getString("Type"));
+                columnasInfo.add(columna);
+            }
         }
+        return columnasInfo;
     }
-    return columnasInfo;
-}
-
 }
