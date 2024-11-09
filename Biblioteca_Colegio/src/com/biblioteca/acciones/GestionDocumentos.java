@@ -46,7 +46,7 @@ public class GestionDocumentos extends JFrame {
 
     public GestionDocumentos() {
         setTitle("Gestión de Documentos");
-        setSize(1000, 700);
+        setSize(1200, 800); // Aumentado para acomodar botones más anchos
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
 
@@ -59,19 +59,20 @@ public class GestionDocumentos extends JFrame {
         // ComboBox para seleccionar el tipo de documento
         String[] tiposDocumentos = cargarTiposDocumentos();
         tipoDocumentoComboBox = new JComboBox<>(tiposDocumentos);
-        tipoDocumentoComboBox.setPreferredSize(new Dimension(200, 30));
+        tipoDocumentoComboBox.setPreferredSize(new Dimension(250, 40)); // Ancho aumentado
+        tipoDocumentoComboBox.setFont(new Font("Arial", Font.PLAIN, 16)); // Fuente más grande
         tipoDocumentoComboBox.addActionListener(e -> actualizarFormularioYID());
 
-        JPanel panelSuperior = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JPanel panelSuperior = new JPanel(new FlowLayout(FlowLayout.LEFT, 20, 10));
         panelSuperior.add(new JLabel("Tipo de Documento:"));
         panelSuperior.add(tipoDocumentoComboBox);
         add(panelSuperior, BorderLayout.NORTH);
 
         // Panel de botones en la parte inferior
-        JPanel panelBotones = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 10));
+        JPanel panelBotones = new JPanel(new FlowLayout(FlowLayout.CENTER, 30, 20)); // Espaciado aumentado
         btnGuardar = crearBotonBasico("Guardar", "Guardar los datos ingresados.");
         btnLimpiar = crearBotonBasico("Limpiar", "Limpiar todos los campos del formulario.");
-        btnCrearNuevoTipo = crearBotonBasico("Crear Nuevo Tipo", "Crear un nuevo  documento.");
+        btnCrearNuevoTipo = crearBotonBasico("Crear Nuevo Tipo", "Crear un nuevo documento.");
         btnVolver = crearBotonBasico("Volver al Menú Anterior", "Volver al menú principal.");
 
         panelBotones.add(btnGuardar);
@@ -134,10 +135,9 @@ public class GestionDocumentos extends JFrame {
         panelDinamico.removeAll();
         ArrayList<Map<String, String>> columnasInfo;
         try {
-            // Obtener columnas con su tipo de datos
             columnasInfo = tipoDocumentoDAO.obtenerColumnasInfo(nombreDocumento);
             GridBagConstraints gbc = new GridBagConstraints();
-            gbc.insets = new Insets(5, 5, 5, 5);
+            gbc.insets = new Insets(10, 10, 10, 10);
             gbc.fill = GridBagConstraints.HORIZONTAL;
 
             // Agregar el campo de ID generado automáticamente
@@ -146,8 +146,9 @@ public class GestionDocumentos extends JFrame {
             panelDinamico.add(new JLabel("ID Documento:"), gbc);
 
             gbc.gridx = 1;
-            idGeneradoField = new JTextField(15);
+            idGeneradoField = new JTextField(20); // Aumentado el tamaño del campo
             idGeneradoField.setEditable(false);
+            idGeneradoField.setFont(new Font("Arial", Font.PLAIN, 16)); // Fuente más grande
             panelDinamico.add(idGeneradoField, gbc);
 
             // Generar campos para cada columna según el tipo de dato
@@ -167,8 +168,9 @@ public class GestionDocumentos extends JFrame {
                 gbc.gridx = 1;
                 if (tipoDato.toLowerCase().contains("int")) {
                     JFormattedTextField campoNumero = new JFormattedTextField();
-                    campoNumero.setColumns(15);
+                    campoNumero.setColumns(20); // Aumentado el tamaño
                     campoNumero.setValue(0); // valor inicial
+                    campoNumero.setFont(new Font("Arial", Font.PLAIN, 16)); // Fuente más grande
                     panelDinamico.add(campoNumero, gbc);
 
                 } else if (tipoDato.toLowerCase().contains("date")) {
@@ -179,10 +181,12 @@ public class GestionDocumentos extends JFrame {
                     p.put("text.year", "Año");
                     JDatePanelImpl datePanel = new JDatePanelImpl(model, p);
                     JDatePickerImpl datePicker = new JDatePickerImpl(datePanel, new DateLabelFormatter());
+                    datePicker.setPreferredSize(new Dimension(200, 40)); // Aumentado el tamaño
                     panelDinamico.add(datePicker, gbc);
 
                 } else {
-                    JTextField campoTexto = new JTextField(15);
+                    JTextField campoTexto = new JTextField(20); // Aumentado el tamaño
+                    campoTexto.setFont(new Font("Arial", Font.PLAIN, 16)); // Fuente más grande
                     panelDinamico.add(campoTexto, gbc);
                 }
                 row++;
@@ -196,9 +200,9 @@ public class GestionDocumentos extends JFrame {
 
     private JButton crearBotonBasico(String texto, String tooltip) {
         JButton boton = new JButton(texto);
-        boton.setPreferredSize(new Dimension(150, 40));
+        boton.setPreferredSize(new Dimension(250, 50)); // Aumentado para que el texto sea más visible
         boton.setFocusPainted(false);
-        boton.setFont(new Font("Arial", Font.BOLD, 14));
+        boton.setFont(new Font("Arial", Font.BOLD, 16)); // Fuente más grande para mejor visibilidad
         boton.setToolTipText(tooltip);
         boton.setHorizontalAlignment(SwingConstants.CENTER);
 
@@ -256,10 +260,12 @@ public class GestionDocumentos extends JFrame {
             }
         }
     }
+
     private void volverAlMenu() {
-        if (JOptionPane.showConfirmDialog(this, "¿Está seguro que desea volver al menú anterior?", "Confirmar Salida", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION)
+        if (JOptionPane.showConfirmDialog(this, "¿Está seguro que desea volver al menú anterior?", "Confirmar Salida", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
             dispose();
-          new MenuAdministrador().setVisible(true);
+            new MenuAdministrador().setVisible(true);
+        }
     }
 
     public static void main(String[] args) {
@@ -302,11 +308,17 @@ public class GestionDocumentos extends JFrame {
                 }
             }
 
-            int columnas = Integer.parseInt(JOptionPane.showInputDialog(this, "Número de columnas (excluyendo ID):"));
+            String numColumnasStr = JOptionPane.showInputDialog(this, "Número de columnas (excluyendo ID):");
+            if (numColumnasStr == null || numColumnasStr.trim().isEmpty()) return;
+            int columnas = Integer.parseInt(numColumnasStr);
             ArrayList<String> nombresColumnas = new ArrayList<>();
 
             for (int i = 0; i < columnas; i++) {
                 String nombreColumna = JOptionPane.showInputDialog(this, "Nombre de la columna " + (i + 1) + ":");
+                if (nombreColumna == null || nombreColumna.trim().isEmpty()) {
+                    JOptionPane.showMessageDialog(this, "Nombre de columna inválido. Operación cancelada.", "Error", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
                 nombresColumnas.add(nombreColumna);
             }
 
@@ -320,6 +332,8 @@ public class GestionDocumentos extends JFrame {
             actualizarFormularioYID();
             JOptionPane.showMessageDialog(this, "Nuevo tipo de documento creado exitosamente.");
 
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this, "Número de columnas inválido.", "Error", JOptionPane.ERROR_MESSAGE);
         } catch (SQLException e) {
             JOptionPane.showMessageDialog(this, "Error al crear el nuevo tipo de documento: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
