@@ -1,6 +1,6 @@
 package com.biblioteca.acciones.GestionProductos;
 
-import com.biblioteca.dao.GestionProductoDAO;
+import com.biblioteca.dao.GestionFormularioDAO;
 
 import javax.swing.*;
 import java.awt.*;
@@ -9,7 +9,7 @@ import java.util.ArrayList;
 
 public class EliminarFormulario extends JPanel {
 
-    private GestionProductoDAO tipoDocumentoDAO;
+    private GestionFormularioDAO tipoDocumentoDAO;
     private JComboBox<String> comboFormularios;
 
     public EliminarFormulario() {
@@ -17,7 +17,7 @@ public class EliminarFormulario extends JPanel {
         setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
         try {
-            tipoDocumentoDAO = new GestionProductoDAO();
+            tipoDocumentoDAO = new GestionFormularioDAO();
         } catch (SQLException e) {
             JOptionPane.showMessageDialog(this, "Error al conectar con la base de datos: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
             return;

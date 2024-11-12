@@ -1,7 +1,7 @@
 package com.biblioteca.acciones.GestionProductos;
 
 import com.biblioteca.controladores.GestionProductoController;
-import com.biblioteca.dao.GestionProductoDAO;
+import com.biblioteca.dao.GestionFormularioDAO;
 import com.biblioteca.ui.MenuAdministrador;
 import org.jdatepicker.impl.JDatePickerImpl;
 import org.jdatepicker.impl.UtilDateModel;
@@ -35,22 +35,22 @@ class DateLabelFormatter extends JFormattedTextField.AbstractFormatter {
     }
 }
 
-public class GestionProducto extends JPanel { // Cambiado a JPanel
+public class GestionFormulario extends JPanel { // Cambiado a JPanel
     private final JComboBox<String> tipoDocumentoComboBox;
     private GestionProductoController controlador;
-    private GestionProductoDAO tipoDocumentoDAO;
+    private GestionFormularioDAO tipoDocumentoDAO;
 
     private final JPanel panelDinamico;
     private JButton btnGuardar, btnLimpiar, btnCrearNuevoTipo, btnEliminarFormulario;
     private JTextField idGeneradoField;
 
-    public GestionProducto() {
+    public GestionFormulario() {
         setLayout(new BorderLayout(10, 10));
         ((JComponent) this).setBorder(new EmptyBorder(10, 10, 10, 10));
 
         try {
             controlador = new GestionProductoController();
-            tipoDocumentoDAO = new GestionProductoDAO();
+            tipoDocumentoDAO = new GestionFormularioDAO();
         } catch (SQLException e) {
             JOptionPane.showMessageDialog(this, "Error al inicializar la conexión a la base de datos: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
@@ -383,8 +383,8 @@ public class GestionProducto extends JPanel { // Cambiado a JPanel
     }
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new GestionProducto().setVisible(true));
-    }
+    SwingUtilities.invokeLater(() -> new GestionFormulario().setVisible(true));
+}
 
     private void crearNuevoTipoDeDocumento() {
         String nombreDocumento = JOptionPane.showInputDialog(this, "Ingrese el nombre del nuevo tipo de documento:");

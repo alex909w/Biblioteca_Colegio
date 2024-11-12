@@ -1,6 +1,6 @@
 package com.biblioteca.acciones.GestionProductos;
 
-import com.biblioteca.dao.GestionProductoDAO;
+import com.biblioteca.dao.GestionFormularioDAO;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -12,12 +12,11 @@ import java.util.ArrayList;
 
 public class AgregarFormulario extends JPanel {
 
-    private GestionProductoDAO tipoDocumentoDAO;
+    private GestionFormularioDAO tipoDocumentoDAO;
     private JTextField txtNombreFormulario;
     private JTextField txtNumeroColumnas;
     private JTable tableColumnas;
     private DefaultTableModel tableModel;
-    private String generatedId;
 
     // Constructor: Inicializa los componentes de la interfaz y establece la conexión con la base de datos
     public AgregarFormulario() {
@@ -25,7 +24,7 @@ public class AgregarFormulario extends JPanel {
         setBorder(new EmptyBorder(10, 10, 10, 10));
 
         try {
-            tipoDocumentoDAO = new GestionProductoDAO();
+            tipoDocumentoDAO = new GestionFormularioDAO();
         } catch (SQLException e) {
             JOptionPane.showMessageDialog(this, "Error al conectar con la base de datos: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
             return;
@@ -114,7 +113,6 @@ public class AgregarFormulario extends JPanel {
             return;
         }
 
-        // Verifica si la tabla existe y maneja las opciones correspondientes
         try {
             if (tipoDocumentoDAO.existeTabla(nombreFormulario.toLowerCase())) {
                 int response = JOptionPane.showOptionDialog(this,
@@ -150,70 +148,58 @@ public class AgregarFormulario extends JPanel {
             return;
         }
 
-        // Agrega filas para cada campo
         for (int i = 0; i < numColumnas; i++) {
             tableModel.addRow(new Object[]{"Columna " + (i + 1), ""});
         }
     }
 
-    // Método para guardar el formulario y sus campos en la base de datos
-    private void guardarFormulario() {
-        String nombreFormulario = txtNombreFormulario.getText().trim().toUpperCase();
-        if (nombreFormulario.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Por favor, ingrese el nombre del formulario.", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        if (tableModel.getRowCount() == 0) {
-            JOptionPane.showMessageDialog(this, "Por favor, genere los campos primero.", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        ArrayList<String> nombresColumnas = new ArrayList<>();
-        for (int i = 0; i < tableModel.getRowCount(); i++) {
-            String nombreColumna = tableModel.getValueAt(i, 1).toString().trim().toUpperCase();
-            if (nombreColumna.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Por favor, complete todos los nombres de los campos.", "Error", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-            nombresColumnas.add(nombreColumna);
-        }
-
-        generatedId = generarIdNombreProducto(nombreFormulario);
-        if (generatedId == null || generatedId.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Error al generar el ID. Por favor, intente nuevamente.", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        try {
-            tipoDocumentoDAO.crearTablaParaDocumento(nombreFormulario, nombresColumnas);
-            tipoDocumentoDAO.insertarTipoDocumento(generatedId, nombreFormulario);
-            JOptionPane.showMessageDialog(this, "Formulario guardado exitosamente.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
-            limpiarCampos();
-        } catch (SQLException e) {
-            JOptionPane.showMessageDialog(this, "Error al guardar el formulario: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-        }
+   // Método para guardar el formulario y sus campos en la base de datos
+private void guardarFormulario() {
+    String nombreFormulario = txtNombreFormulario.getText().trim().toUpperCase();
+    if (nombreFormulario.isEmpty()) {
+        JOptionPane.showMessageDialog(this, "Por favor, ingrese el nombre del formulario.", "Error", JOptionPane.ERROR_MESSAGE);
+        return;
     }
+
+    if (tableModel.getRowCount() == 0) {
+        JOptionPane.showMessageDialog(this, "Por favor, genere los campos primero.", "Error", JOptionPane.ERROR_MESSAGE);
+        return;
+    }
+
+    ArrayList<String> nombresColumnas = new ArrayList<>();
+    for (int i = 0; i < tableModel.getRowCount(); i++) {
+        String nombreColumna = tableModel.getValueAt(i, 1).toString().trim().toUpperCase();
+        if (nombreColumna.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Por favor, complete todos los nombres de los campos.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        nombresColumnas.add(nombreColumna);
+    }
+
+    try {
+        // Generar nombre de la tabla y crearla en la base de datos
+        String nombreTabla = nombreFormulario.toLowerCase().replace(" ", "_") + "_tabla"; // Generar nombre_tabla
+        tipoDocumentoDAO.crearTablaParaDocumento(nombreTabla, nombresColumnas);
+
+        // Generar el ID para el nuevo tipo de documento
+        String generatedId = tipoDocumentoDAO.generarNuevoId("tiposdocumentos");
+
+        // Insertar el tipo de documento en `tiposdocumentos` con el nombre de la tabla
+        tipoDocumentoDAO.insertarTipoDocumento(generatedId, nombreFormulario, nombreTabla);
+
+        JOptionPane.showMessageDialog(this, "Formulario guardado exitosamente.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
+        limpiarCampos();
+
+    } catch (SQLException e) {
+        JOptionPane.showMessageDialog(this, "Error al guardar el formulario: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+    }
+}
+
 
     // Limpia los campos de entrada y las filas de la tabla
     private void limpiarCampos() {
         txtNombreFormulario.setText("");
         txtNumeroColumnas.setText("");
         tableModel.setRowCount(0);
-    }
-
-    // Genera un ID único para el formulario del producto
-    private String generarIdNombreProducto(String nombreFormulario) {
-        String prefix = nombreFormulario.length() >= 3 ? nombreFormulario.substring(0, 3).toUpperCase() : nombreFormulario.toUpperCase();
-        String newId = prefix + "001";
-
-        try {
-            int count = tipoDocumentoDAO.obtenerNumeroActual(nombreFormulario);
-            newId = prefix + String.format("%03d", count + 1);
-        } catch (SQLException e) {
-            System.err.println("Error al generar el ID: " + e.getMessage());
-        }
-
-        return newId;
     }
 }

@@ -2,10 +2,9 @@ package com.biblioteca.ui;
 
 import com.biblioteca.acciones.GestionProductos.AgregarFormulario;
 import com.biblioteca.acciones.GestionProductos.EditarFormulario;
-import com.biblioteca.acciones.AgregarInventario;
-import com.biblioteca.acciones.EditarInventario;
-import com.biblioteca.acciones.ActualizarInventario;
 import com.biblioteca.acciones.Usuarios.AdministracionUsuarios;
+import com.biblioteca.acciones.AgregarInventario;
+import com.biblioteca.acciones.ActualizarInventario;
 
 import javax.swing.*;
 import javax.swing.border.*;
@@ -25,9 +24,11 @@ public class MenuAdministrador extends JFrame {
     private boolean subMenuProductosVisible = false;
     private boolean subMenuInventarioVisible = false;
 
+    private JTable tablaInventarios; // Tabla de inventarios
+
     public MenuAdministrador() {
         setTitle("Sistema Bibliotecario - Panel de Administración");
-        setSize(1000, 600);
+        setSize(1200, 600);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
@@ -35,6 +36,7 @@ public class MenuAdministrador extends JFrame {
         add(crearPanelSuperior(), BorderLayout.NORTH);
         add(crearPanelNavegacion(), BorderLayout.WEST);
 
+        // Panel de contenido original
         panelContenido = new JPanel(new BorderLayout());
         JLabel lblBienvenida = new JLabel("Bienvenido, Administrador", SwingConstants.CENTER);
         lblBienvenida.setFont(FUENTE_TITULO);
@@ -155,34 +157,29 @@ public class MenuAdministrador extends JFrame {
         agregarProducto.setBackground(FONDO_LATERAL);
         agregarProducto.addActionListener(e -> mostrarContenido(new AgregarInventario()));
 
-        JButton editarProducto = new JButton("Editar Producto");
-        editarProducto.setFont(FUENTE_PRINCIPAL);
-        editarProducto.setHorizontalAlignment(SwingConstants.LEFT);
-        editarProducto.setBorder(BorderFactory.createEmptyBorder(5, 30, 5, 5));
-        editarProducto.setBackground(FONDO_LATERAL);
-        editarProducto.addActionListener(e -> mostrarContenido(new EditarInventario()));
-
-        JButton buscarProducto = new JButton("Buscar Producto");
-        buscarProducto.setFont(FUENTE_PRINCIPAL);
-        buscarProducto.setHorizontalAlignment(SwingConstants.LEFT);
-        buscarProducto.setBorder(BorderFactory.createEmptyBorder(5, 30, 5, 5));
-        buscarProducto.setBackground(FONDO_LATERAL);
-       //.addActionListener(e -> mostrarContenido(new BuscarInventario()));
-
-        JButton actualizarEntradaSalida = new JButton("Actualizar Entrada/Salida");
+         JButton actualizarEntradaSalida = new JButton("Actualizar / Eliminar");
         actualizarEntradaSalida.setFont(FUENTE_PRINCIPAL);
         actualizarEntradaSalida.setHorizontalAlignment(SwingConstants.LEFT);
         actualizarEntradaSalida.setBorder(BorderFactory.createEmptyBorder(5, 30, 5, 5));
         actualizarEntradaSalida.setBackground(FONDO_LATERAL);
         actualizarEntradaSalida.addActionListener(e -> mostrarContenido(new ActualizarInventario()));
 
+        JButton buscarProducto = new JButton("Buscar Producto");
+        buscarProducto.setFont(FUENTE_PRINCIPAL);
+        buscarProducto.setHorizontalAlignment(SwingConstants.LEFT);
+        buscarProducto.setBorder(BorderFactory.createEmptyBorder(5, 30, 5, 5));
+        buscarProducto.setBackground(FONDO_LATERAL);
+       
+
+       
+
         subMenuGestionInventario.add(agregarProducto);
-        subMenuGestionInventario.add(editarProducto);
         subMenuGestionInventario.add(buscarProducto);
         subMenuGestionInventario.add(actualizarEntradaSalida);
 
         return subMenuGestionInventario;
     }
+
 
     private void toggleSubMenuProductos() {
         subMenuProductosVisible = !subMenuProductosVisible;

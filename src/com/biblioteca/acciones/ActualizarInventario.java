@@ -9,20 +9,23 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
 
-public class ActualizarInventario extends JPanel {
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 
+public class ActualizarInventario extends JPanel {
     private GestionInventarioDAO gestionInventarioDAO;
     private JTable tablaInventarios;
     private DefaultTableModel modeloTabla;
     private JComboBox<String> comboFormularios;
     private String nombreFormularioSeleccionado;
+    private String nombreTablaSeleccionada;
+    private JButton btnEditar;
 
     public ActualizarInventario() {
-         add(new JLabel("Actualizar Entrada/Salida de Inventario"));
+        add(new JLabel("Actualizar Entrada/Salida de Inventario"));
         setLayout(new BorderLayout(10, 10));
         setBorder(new EmptyBorder(10, 10, 10, 10));
 
@@ -42,12 +45,22 @@ public class ActualizarInventario extends JPanel {
 
         modeloTabla = new DefaultTableModel();
         tablaInventarios = new JTable(modeloTabla);
+        tablaInventarios.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+        tablaInventarios.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+            public void valueChanged(ListSelectionEvent event) {
+                btnEditar.setEnabled(tablaInventarios.getSelectedRow() != -1);
+            }
+        });
+
         JScrollPane scrollPane = new JScrollPane(tablaInventarios);
         add(scrollPane, BorderLayout.CENTER);
 
         JPanel panelBotones = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
-        JButton btnEditar = new JButton("Editar");
+        btnEditar = new JButton("Editar");
+        btnEditar.setEnabled(false);
         btnEditar.addActionListener(e -> editarInventarioSeleccionado());
+
         JButton btnEliminar = new JButton("Eliminar");
         btnEliminar.addActionListener(e -> eliminarInventarioSeleccionado());
 
@@ -74,12 +87,18 @@ public class ActualizarInventario extends JPanel {
         if (nombreFormularioSeleccionado == null) return;
 
         try {
-            ArrayList<String> columnas = gestionInventarioDAO.obtenerColumnasDeTabla(nombreFormularioSeleccionado);
+            nombreTablaSeleccionada = gestionInventarioDAO.obtenerNombreTablaPorTipo(nombreFormularioSeleccionado);
+            if (nombreTablaSeleccionada == null) {
+                JOptionPane.showMessageDialog(this, "No se encontró la tabla para el tipo de documento seleccionado.", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            ArrayList<String> columnas = gestionInventarioDAO.obtenerColumnasDeTabla(nombreTablaSeleccionada);
             for (String columna : columnas) {
                 modeloTabla.addColumn(columna);
             }
 
-            ArrayList<ArrayList<String>> datos = gestionInventarioDAO.obtenerDatosDeTabla(nombreFormularioSeleccionado);
+            ArrayList<ArrayList<String>> datos = gestionInventarioDAO.obtenerDatosDeTabla(nombreTablaSeleccionada);
             for (ArrayList<String> fila : datos) {
                 modeloTabla.addRow(fila.toArray());
             }
@@ -96,8 +115,12 @@ public class ActualizarInventario extends JPanel {
         }
 
         String idInventario = modeloTabla.getValueAt(filaSeleccionada, 0).toString();
-        EditarInventario editarInventarioPanel = new EditarInventario(nombreFormularioSeleccionado, idInventario);
-        JOptionPane.showMessageDialog(this, editarInventarioPanel, "Editar Inventario", JOptionPane.PLAIN_MESSAGE);
+        EditarInventario editarInventarioPanel = new EditarInventario(nombreTablaSeleccionada, idInventario);
+
+        int result = JOptionPane.showConfirmDialog(this, editarInventarioPanel, "Editar Inventario", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+        if (result == JOptionPane.OK_OPTION) {
+            cargarTabla();
+        }
     }
 
     private void eliminarInventarioSeleccionado() {
@@ -111,7 +134,7 @@ public class ActualizarInventario extends JPanel {
         int confirmacion = JOptionPane.showConfirmDialog(this, "¿Está seguro de que desea eliminar el inventario con ID: " + idInventario + "?", "Confirmar Eliminación", JOptionPane.YES_NO_OPTION);
         if (confirmacion == JOptionPane.YES_OPTION) {
             try {
-                gestionInventarioDAO.eliminarInventarioPorId(nombreFormularioSeleccionado, idInventario);
+                gestionInventarioDAO.eliminarInventarioPorId(nombreTablaSeleccionada, idInventario);
                 JOptionPane.showMessageDialog(this, "Inventario eliminado exitosamente.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
                 cargarTabla();
             } catch (SQLException e) {
@@ -119,7 +142,4 @@ public class ActualizarInventario extends JPanel {
             }
         }
     }
-    
-
-
 }
