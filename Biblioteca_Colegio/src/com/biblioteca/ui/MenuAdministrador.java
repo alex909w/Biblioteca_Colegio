@@ -1,7 +1,7 @@
 package com.biblioteca.ui;
 
-import com.biblioteca.acciones.GestionDocumentos;
-import com.biblioteca.acciones.administracionUsuarios;
+import com.biblioteca.acciones.AdministracionUsuarios;
+import com.biblioteca.acciones.*;
 import javax.swing.*;
 import javax.swing.border.*;
 import java.awt.*;
@@ -9,43 +9,37 @@ import java.awt.event.*;
 
 public class MenuAdministrador extends JFrame {
     // Constantes de diseño
-    private final Color PRIMARY_COLOR = new Color(51, 102, 153);
-    private final Color SECONDARY_COLOR = new Color(240, 240, 240);
-    private final Color HOVER_COLOR = new Color(41, 82, 123);
-    private final Color SIDEBAR_BG = new Color(248, 249, 250);
-    private final Font MAIN_FONT = new Font("Segoe UI", Font.PLAIN, 14);
-    private final Font TITLE_FONT = new Font("Segoe UI", Font.BOLD, 24);
-    private final Font MENU_FONT = new Font("Segoe UI", Font.PLAIN, 15);
+    private final Color COLOR_PRIMARIO = new Color(51, 102, 153);
+    private final Color FONDO_LATERAL = new Color(248, 249, 250);
+    private final Color COLOR_HOVER = new Color(233, 236, 239);
+    private final Font FUENTE_PRINCIPAL = new Font("Segoe UI", Font.PLAIN, 14);
+    private final Font FUENTE_TITULO = new Font("Segoe UI", Font.BOLD, 24);
+
+    private JPanel panelContenido; // Panel principal para cambiar el contenido dinámicamente
 
     public MenuAdministrador() {
-        configurarVentana();
-        inicializarComponentes();
-    }
-
-    private void configurarVentana() {
         setTitle("Sistema Bibliotecario - Panel de Administración");
         setSize(1000, 600);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
-        setMinimumSize(new Dimension(800, 500));
-    }
 
-    private void inicializarComponentes() {
+        // Configuración del diseño general con el panel superior y el panel de navegación lateral
         setLayout(new BorderLayout());
-        
-        // Panel superior
         add(crearPanelSuperior(), BorderLayout.NORTH);
-        
-        // Panel de navegación lateral
         add(crearPanelNavegacion(), BorderLayout.WEST);
-        
-        // Panel principal de contenido
-        add(crearPanelContenido(), BorderLayout.CENTER);
+
+        // Panel de contenido para cambiar dinámicamente según la selección del usuario
+        panelContenido = new JPanel(new BorderLayout());
+        JLabel lblBienvenida = new JLabel("Bienvenido, Administrador", SwingConstants.CENTER);
+        lblBienvenida.setFont(FUENTE_TITULO);
+        panelContenido.add(lblBienvenida, BorderLayout.CENTER);
+
+        add(panelContenido, BorderLayout.CENTER);
     }
 
     private JPanel crearPanelSuperior() {
         JPanel panelSuperior = new JPanel(new BorderLayout());
-        panelSuperior.setBackground(PRIMARY_COLOR);
+        panelSuperior.setBackground(COLOR_PRIMARIO);
         panelSuperior.setPreferredSize(new Dimension(0, 60));
         panelSuperior.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
 
@@ -60,7 +54,7 @@ public class MenuAdministrador extends JFrame {
     private JPanel crearPanelNavegacion() {
         JPanel panelNavegacion = new JPanel();
         panelNavegacion.setLayout(new BoxLayout(panelNavegacion, BoxLayout.Y_AXIS));
-        panelNavegacion.setBackground(SIDEBAR_BG);
+        panelNavegacion.setBackground(FONDO_LATERAL);
         panelNavegacion.setBorder(BorderFactory.createCompoundBorder(
             new MatteBorder(0, 0, 0, 1, new Color(218, 220, 224)),
             BorderFactory.createEmptyBorder(20, 15, 20, 15)
@@ -68,147 +62,112 @@ public class MenuAdministrador extends JFrame {
         panelNavegacion.setPreferredSize(new Dimension(250, 0));
 
         // Crear botones de menú
-        String[] menuItems = {
-            "Gestión de Usuarios",
-            "Gestión de Documentos",
-            "Configuración",
-            "Buscar Libros",
-            "Préstamos",
-            "Salir"
-        };
+        JButton btnGestionUsuarios = crearBotonMenu("Gestión de Usuarios", "icon_usuarios.png");
+        JButton btnGestionDocumentos = crearBotonMenu("Gestión de Documentos", "icon_documentos.png");
+        JButton btnInventario = crearBotonMenu("Gestión de Inventario", "icon_inventario.png");
+        JButton btnConfiguracion = crearBotonMenu("Configuración", "icon_configuracion.png");
+        JButton btnBuscarLibros = crearBotonMenu("Buscar Libros", "icon_buscar.png");
+        JButton btnPrestamos = crearBotonMenu("Préstamos", "icon_prestamos.png");
+        JButton btnSalir = crearBotonMenu("Salir", "icon_salir.png");
 
-        for (String menuItem : menuItems) {
-            JButton btn = crearBotonMenu(menuItem);
-            panelNavegacion.add(btn);
-            panelNavegacion.add(Box.createRigidArea(new Dimension(0, 10)));
-        }
+        // Acciones para mostrar paneles de contenido en el área central (Panel #1)
+        btnGestionUsuarios.addActionListener(e -> mostrarContenido(new AdministracionUsuarios()));
+        btnGestionDocumentos.addActionListener(e -> mostrarContenido(new GestionDocumentosPanel()));
+        btnInventario.addActionListener(e -> mostrarContenido(new GestionInventarioPanel()));
+        btnConfiguracion.addActionListener(e -> mostrarContenido(new ConfiguracionPanel()));
+        btnBuscarLibros.addActionListener(e -> mostrarContenido(new BuscarLibrosPanel()));
+        btnPrestamos.addActionListener(e -> mostrarContenido(new PrestamosPanel()));
+
+        btnSalir.addActionListener(e -> System.exit(0)); // Cierra la aplicación
+
+        // Añadir botones al panel de navegación
+        panelNavegacion.add(btnGestionUsuarios);
+        panelNavegacion.add(Box.createVerticalStrut(10));
+        panelNavegacion.add(btnGestionDocumentos);
+        panelNavegacion.add(Box.createVerticalStrut(10));
+        panelNavegacion.add(btnInventario);
+        panelNavegacion.add(Box.createVerticalStrut(10));
+        panelNavegacion.add(btnConfiguracion);
+        panelNavegacion.add(Box.createVerticalStrut(10));
+        panelNavegacion.add(btnBuscarLibros);
+        panelNavegacion.add(Box.createVerticalStrut(10));
+        panelNavegacion.add(btnPrestamos);
+        panelNavegacion.add(Box.createVerticalStrut(10));
+        panelNavegacion.add(btnSalir);
 
         return panelNavegacion;
     }
 
-    private JButton crearBotonMenu(String texto) {
+    private JButton crearBotonMenu(String texto, String icono) {
         JButton boton = new JButton(texto);
-        boton.setFont(MENU_FONT);
-        boton.setForeground(new Color(33, 37, 41));
-        boton.setBackground(SIDEBAR_BG);
-        boton.setBorderPainted(false);
-        boton.setFocusPainted(false);
+        boton.setIcon(new ImageIcon(icono)); // Coloca los iconos en la carpeta adecuada
         boton.setHorizontalAlignment(SwingConstants.LEFT);
-        boton.setCursor(new Cursor(Cursor.HAND_CURSOR));
         boton.setMaximumSize(new Dimension(220, 40));
-        boton.setPreferredSize(new Dimension(220, 40));
+        boton.setBackground(FONDO_LATERAL);
+        boton.setFont(FUENTE_PRINCIPAL);
+        boton.setForeground(new Color(33, 37, 41));
+        boton.setBorder(BorderFactory.createEmptyBorder(5, 15, 5, 5));
+        boton.setFocusPainted(false);
 
-        // Efectos hover
         boton.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseEntered(MouseEvent e) {
-                boton.setBackground(new Color(233, 236, 239));
+                boton.setBackground(COLOR_HOVER);
             }
 
             @Override
             public void mouseExited(MouseEvent e) {
-                boton.setBackground(SIDEBAR_BG);
+                boton.setBackground(FONDO_LATERAL);
             }
         });
-
-        // Agregar ActionListener según el botón
-        switch (texto) {
-            case "Gestión de Usuarios":
-                boton.addActionListener(e -> {
-                    new administracionUsuarios().setVisible(true);
-                    dispose();
-                });
-                break;
-            case "Gestión de Documentos":
-                boton.addActionListener(e -> {
-                    SwingUtilities.invokeLater(() -> {
-                        new GestionDocumentos().setVisible(true);
-                        dispose();
-                    });
-                });
-                break;
-            case "Salir":
-                boton.addActionListener(e -> {
-                    new BibliotecaLogin().setVisible(true);
-                    dispose();
-                });
-                break;
-            default:
-                boton.addActionListener(e -> 
-                    JOptionPane.showMessageDialog(
-                        this,
-                        "Funcionalidad en desarrollo: " + texto,
-                        "Información",
-                        JOptionPane.INFORMATION_MESSAGE
-                    )
-                );
-        }
-
+        
         return boton;
     }
 
-    private JPanel crearPanelContenido() {
-        JPanel panelContenido = new JPanel(new BorderLayout(20, 20));
-        panelContenido.setBackground(Color.WHITE);
-        panelContenido.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
-
-        // Panel de bienvenida
-        JPanel panelBienvenida = new JPanel(new BorderLayout());
-        panelBienvenida.setBackground(Color.WHITE);
-
-        JLabel lblBienvenida = new JLabel("Bienvenido, Administrador");
-        lblBienvenida.setFont(TITLE_FONT);
-        lblBienvenida.setForeground(new Color(33, 37, 41));
-        panelBienvenida.add(lblBienvenida, BorderLayout.NORTH);
-
-        // Panel de resumen
-        JPanel panelResumen = new JPanel(new GridLayout(2, 2, 20, 20));
-        panelResumen.setBackground(Color.WHITE);
-        panelResumen.setBorder(BorderFactory.createEmptyBorder(30, 0, 0, 0));
-
-        // Agregar tarjetas de resumen
-        panelResumen.add(crearTarjetaResumen("Usuarios Totales", "150"));
-        panelResumen.add(crearTarjetaResumen("Libros Disponibles", "1,234"));
-        panelResumen.add(crearTarjetaResumen("Préstamos Activos", "45"));
-        panelResumen.add(crearTarjetaResumen("Nuevos Usuarios", "12"));
-
-        panelContenido.add(panelBienvenida, BorderLayout.NORTH);
-        panelContenido.add(panelResumen, BorderLayout.CENTER);
-
-        return panelContenido;
-    }
-
-    private JPanel crearTarjetaResumen(String titulo, String valor) {
-        JPanel tarjeta = new JPanel(new BorderLayout(10, 10));
-        tarjeta.setBackground(Color.WHITE);
-        tarjeta.setBorder(BorderFactory.createCompoundBorder(
-            new LineBorder(new Color(233, 236, 239)),
-            BorderFactory.createEmptyBorder(20, 20, 20, 20)
-        ));
-
-        JLabel lblTitulo = new JLabel(titulo);
-        lblTitulo.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        lblTitulo.setForeground(new Color(108, 117, 125));
-
-        JLabel lblValor = new JLabel(valor);
-        lblValor.setFont(new Font("Segoe UI", Font.BOLD, 24));
-        lblValor.setForeground(new Color(33, 37, 41));
-
-        tarjeta.add(lblTitulo, BorderLayout.NORTH);
-        tarjeta.add(lblValor, BorderLayout.CENTER);
-
-        return tarjeta;
+    private void mostrarContenido(JPanel panel) {
+        panelContenido.removeAll();
+        panelContenido.add(panel, BorderLayout.CENTER);
+        panelContenido.revalidate();
+        panelContenido.repaint();
     }
 
     public static void main(String[] args) {
-        try {
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        SwingUtilities.invokeLater(() -> new MenuAdministrador().setVisible(true));
+    }
+}
 
-        SwingUtilities.invokeLater(() -> {
-            new MenuAdministrador().setVisible(true);
-        });
+// Ejemplos de paneles para el contenido dinámico (puedes personalizarlos)
+class GestionDocumentosPanel extends JPanel {
+    public GestionDocumentosPanel() {
+        setLayout(new BorderLayout());
+        add(new JLabel("Panel de Gestión de Documentos", SwingConstants.CENTER), BorderLayout.CENTER);
+    }
+}
+
+class GestionInventarioPanel extends JPanel {
+    public GestionInventarioPanel() {
+        setLayout(new BorderLayout());
+        add(new JLabel("Panel de Gestión de Inventario", SwingConstants.CENTER), BorderLayout.CENTER);
+    }
+}
+
+class ConfiguracionPanel extends JPanel {
+    public ConfiguracionPanel() {
+        setLayout(new BorderLayout());
+        add(new JLabel("Panel de Configuración", SwingConstants.CENTER), BorderLayout.CENTER);
+    }
+}
+
+class BuscarLibrosPanel extends JPanel {
+    public BuscarLibrosPanel() {
+        setLayout(new BorderLayout());
+        add(new JLabel("Panel de Búsqueda de Libros", SwingConstants.CENTER), BorderLayout.CENTER);
+    }
+}
+
+class PrestamosPanel extends JPanel {
+    public PrestamosPanel() {
+        setLayout(new BorderLayout());
+        add(new JLabel("Panel de Préstamos", SwingConstants.CENTER), BorderLayout.CENTER);
     }
 }

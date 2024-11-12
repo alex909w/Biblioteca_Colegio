@@ -1,6 +1,6 @@
 package com.biblioteca.ui;
 
-import com.biblioteca.validaciones.Validaciones;
+import com.biblioteca.utilidades.Validaciones;
 import javax.swing.*;
 import javax.swing.border.*;
 import java.awt.*;
@@ -213,4 +213,28 @@ public class BibliotecaLogin extends JFrame {
             new BibliotecaLogin().setVisible(true);
         });
     }
+    
+    // Métodos para acceder a los componentes desde el controlador
+    public String getCorreo() {
+        return txtCorreo.getText().trim();
+    }
+
+    public String getContrasena() {
+        return new String(txtContrasena.getPassword()).trim();
+    }
+
+    public void mostrarMensaje(String mensaje) {
+        lblMensaje.setText(mensaje);
+    }
+
+    public void mostrarDialogo(String mensaje) {
+        JOptionPane.showMessageDialog(this, mensaje);
+    }
+
+    public void limpiarCampos() {
+        txtCorreo.setText("");
+        txtContrasena.setText("");
+        lblMensaje.setText("");
+    }
+
 }
