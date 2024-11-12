@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1:3306
--- Tiempo de generación: 08-11-2024 a las 18:01:42
+-- Tiempo de generación: 11-11-2024 a las 23:00:18
 -- Versión del servidor: 8.3.0
 -- Versión de PHP: 8.2.18
 
@@ -20,6 +20,25 @@ SET time_zone = "+00:00";
 --
 -- Base de datos: `biblioteca_colegio`
 --
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `cd`
+--
+
+DROP TABLE IF EXISTS `cd`;
+CREATE TABLE IF NOT EXISTS `cd` (
+  `id` varchar(10) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `fecha` date DEFAULT NULL,
+  `a` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `b` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `Disponibles` int DEFAULT NULL,
+  `Estado` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `Palabra clave` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `Ubicación Física` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -52,23 +71,29 @@ INSERT INTO `configuracion` (`id_configuracion`, `clave`, `valor`) VALUES
 
 DROP TABLE IF EXISTS `libros`;
 CREATE TABLE IF NOT EXISTS `libros` (
-  `id` varchar(10) NOT NULL,
-  `TITULO` varchar(255) DEFAULT NULL,
-  `AUTOR` varchar(255) DEFAULT NULL,
-  `FECHA_DE_PUBLICACION` date DEFAULT NULL,
-  `CATEGORIA` varchar(255) DEFAULT NULL,
-  `EJEMPLARES` int DEFAULT NULL,
-  `ISBN` varchar(255) DEFAULT NULL,
-  `PAGINAS` int DEFAULT NULL,
+  `id` varchar(10) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `Título` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `Autor(es)` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `Categoría` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `Fecha de Publicación` date DEFAULT NULL,
+  `Editorial` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `ISBN` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `Disponibles` int DEFAULT NULL,
+  `Estado` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `Palabra clave` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `Ubicación Física` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Volcado de datos para la tabla `libros`
 --
 
-INSERT INTO `libros` (`id`, `TITULO`, `AUTOR`, `FECHA_DE_PUBLICACION`, `CATEGORIA`, `EJEMPLARES`, `ISBN`, `PAGINAS`) VALUES
-('LIB001', 'aaa', 'aaa', '2024-11-08', 'aaa', 125, 'aaaaa', 12);
+INSERT INTO `libros` (`id`, `Título`, `Autor(es)`, `Categoría`, `Fecha de Publicación`, `Editorial`, `ISBN`, `Disponibles`, `Estado`, `Palabra clave`, `Ubicación Física`) VALUES
+('LIB001', 'aaaa', 'aaaa', 'aaaa', '2024-11-11', 'aaa', 'aaaa', 15, 'aaaa', 'aaaa', 'aaaaa'),
+('LIB002', 'aaaa', 'aaa', 'aaa', '2024-11-11', 'aaaa', 'aaaa', 10, 'aaa', 'aaaa', 'aaa'),
+('LIB003', 'asdasd', 'asdasdasda', 'asdasd', '2024-11-11', 'asdasdasd', 'sdasda', 0, 'sdasdasdasd', 'asdasdasd', 'asdasdasd'),
+('LIB00004', 'AAAA', 'AAA', 'AAA', '2024-11-11', 'AAA', 'AAA', 12, 'AAA', 'AAA', 'AAA');
 
 -- --------------------------------------------------------
 
@@ -130,20 +155,18 @@ CREATE TABLE IF NOT EXISTS `productos` (
 
 DROP TABLE IF EXISTS `tiposdocumentos`;
 CREATE TABLE IF NOT EXISTS `tiposdocumentos` (
-  `id_documento` int NOT NULL AUTO_INCREMENT,
-  `nombre` varchar(255) NOT NULL,
-  `descripcion` text,
+  `id` int NOT NULL AUTO_INCREMENT,
+  `nombre` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   `fecha_creacion` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  `estado` tinyint(1) DEFAULT '1',
-  PRIMARY KEY (`id_documento`)
-) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  PRIMARY KEY (`id`)
+) ENGINE=MyISAM AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Volcado de datos para la tabla `tiposdocumentos`
 --
 
-INSERT INTO `tiposdocumentos` (`id_documento`, `nombre`, `descripcion`, `fecha_creacion`, `estado`) VALUES
-(1, 'Libros', NULL, '2024-11-08 17:54:26', 1);
+INSERT INTO `tiposdocumentos` (`id`, `nombre`, `fecha_creacion`) VALUES
+(5, 'LIBROS', '2024-11-11 16:36:47');
 
 -- --------------------------------------------------------
 
