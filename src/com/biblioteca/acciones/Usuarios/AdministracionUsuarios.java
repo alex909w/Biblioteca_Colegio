@@ -21,9 +21,9 @@ public class AdministracionUsuarios extends JPanel {
     private JDatePickerImpl datePicker;
     private JTable tableUsuarios;
     private DefaultTableModel tableModel;
-    private JButton btnAgregar, btnActualizar, btnEliminar, btnCancelar;
     private JSpinner spinnerLimitePrestamos;
-    private JPanel panelBotones;
+    private JPanel panelBusqueda;
+    private JButton btnBuscar, btnLimpiarBusqueda;
 
     private boolean editMode = false;
     private boolean nuevoModo = false;
@@ -58,7 +58,7 @@ public class AdministracionUsuarios extends JPanel {
         JLabel lblLimitePrestamos = new JLabel("Límite de Préstamos:");
         spinnerLimitePrestamos = new JSpinner(new SpinnerNumberModel(1, 1, 100, 1));
         JLabel lblFechaRegistro = new JLabel("Fecha de Registro:");
-        
+
         // Date Picker
         UtilDateModel model = new UtilDateModel();
         Properties properties = new Properties();
@@ -74,11 +74,13 @@ public class AdministracionUsuarios extends JPanel {
         gbcCampos.anchor = GridBagConstraints.WEST;
 
         // Añadir componentes al panel de campos
-        gbcCampos.gridx = 0; gbcCampos.gridy = 0;
+        gbcCampos.gridx = 0;
+        gbcCampos.gridy = 0;
         panelCampos.add(lblId, gbcCampos);
         gbcCampos.gridx = 1;
         panelCampos.add(txtId, gbcCampos);
-        gbcCampos.gridx = 0; gbcCampos.gridy = 1;
+        gbcCampos.gridx = 0;
+        gbcCampos.gridy = 1;
         panelCampos.add(lblNombres, gbcCampos);
         gbcCampos.gridx = 1;
         panelCampos.add(txtNombres, gbcCampos);
@@ -86,7 +88,8 @@ public class AdministracionUsuarios extends JPanel {
         panelCampos.add(lblApellidos, gbcCampos);
         gbcCampos.gridx = 3;
         panelCampos.add(txtApellidos, gbcCampos);
-        gbcCampos.gridx = 0; gbcCampos.gridy = 2;
+        gbcCampos.gridx = 0;
+        gbcCampos.gridy = 2;
         panelCampos.add(lblClave, gbcCampos);
         gbcCampos.gridx = 1;
         panelCampos.add(txtClave, gbcCampos);
@@ -94,7 +97,8 @@ public class AdministracionUsuarios extends JPanel {
         panelCampos.add(lblEmail, gbcCampos);
         gbcCampos.gridx = 3;
         panelCampos.add(txtEmail, gbcCampos);
-        gbcCampos.gridx = 0; gbcCampos.gridy = 3;
+        gbcCampos.gridx = 0;
+        gbcCampos.gridy = 3;
         panelCampos.add(lblTelefono, gbcCampos);
         gbcCampos.gridx = 1;
         panelCampos.add(txtTelefono, gbcCampos);
@@ -102,7 +106,8 @@ public class AdministracionUsuarios extends JPanel {
         panelCampos.add(lblTipoUsuario, gbcCampos);
         gbcCampos.gridx = 3;
         panelCampos.add(cbTipoUsuario, gbcCampos);
-        gbcCampos.gridx = 0; gbcCampos.gridy = 4;
+        gbcCampos.gridx = 0;
+        gbcCampos.gridy = 4;
         panelCampos.add(lblLimitePrestamos, gbcCampos);
         gbcCampos.gridx = 1;
         panelCampos.add(spinnerLimitePrestamos, gbcCampos);
@@ -112,12 +117,12 @@ public class AdministracionUsuarios extends JPanel {
         panelCampos.add(datePicker, gbcCampos);
 
         // Panel de búsqueda
-        JPanel panelBusqueda = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        panelBusqueda = new JPanel(new FlowLayout(FlowLayout.LEFT));
         JLabel lblBuscar = new JLabel("Buscar:");
         txtBuscar = new JTextField(20);
         cbFiltroBusqueda = new JComboBox<>(new String[]{"Nombre", "Correo", "Tipo de Usuario"});
-        JButton btnBuscar = new JButton("Buscar");
-        JButton btnLimpiarBusqueda = new JButton("Limpiar");
+        btnBuscar = new JButton("Buscar");
+        btnLimpiarBusqueda = new JButton("Limpiar");
 
         panelBusqueda.add(lblBuscar);
         panelBusqueda.add(txtBuscar);
@@ -131,82 +136,10 @@ public class AdministracionUsuarios extends JPanel {
         tableUsuarios.getColumn("Clave").setCellRenderer(new PasswordRenderer());
         JScrollPane scrollPane = new JScrollPane(tableUsuarios);
 
-        // Panel de botones
-        panelBotones = new JPanel(new GridBagLayout());
-        btnAgregar = new JButton("Nuevo");
-        btnActualizar = new JButton("Actualizar");
-        btnEliminar = new JButton("Eliminar");
-        btnCancelar = new JButton("Cancelar");
-
-        Font buttonFont = new Font("Arial", Font.BOLD, 18);
-        Dimension buttonSize = new Dimension(180, 60);
-        aplicarEstiloBoton(btnAgregar, buttonFont, buttonSize);
-        aplicarEstiloBoton(btnActualizar, buttonFont, buttonSize);
-        aplicarEstiloBoton(btnEliminar, buttonFont, buttonSize);
-        aplicarEstiloBoton(btnCancelar, buttonFont, buttonSize);
-
-        // Añadir los botones al panel usando GridBagConstraints
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(10, 20, 10, 20); // Margen entre botones
-        gbc.gridy = 0; // Fila para todos los botones
-
-        gbc.gridx = 0;
-        panelBotones.add(btnAgregar, gbc);
-
-        gbc.gridx = 1;
-        panelBotones.add(btnActualizar, gbc);
-
-        gbc.gridx = 2;
-        panelBotones.add(btnEliminar, gbc);
-
-        gbc.gridx = 3;
-        panelBotones.add(btnCancelar, gbc);
-
         // Listeners para los botones
-        btnAgregar.addActionListener(e -> {
-            if (!editMode && !nuevoModo) {
-                setNuevoModo(true);
-                habilitarCampos(true);
-                btnAgregar.setText("Guardar");
-            } else {
-                controlador.manejarBotonAgregar();
-                limpiarCampos();
-                setNuevoModo(false);
-                btnAgregar.setText("Nuevo");
-                habilitarCampos(false);
-            }
-        });
-
-        btnActualizar.addActionListener(e -> {
-            if (!editMode) {
-                setEditMode(true);
-                habilitarCampos(true);
-                btnActualizar.setText("Guardar Cambios");
-            } else {
-                controlador.manejarBotonActualizar();
-                limpiarCampos();
-                setEditMode(false);
-                btnActualizar.setText("Actualizar");
-                habilitarCampos(false);
-            }
-        });
-
-        btnEliminar.addActionListener(e -> {
-            controlador.eliminarUsuario();
-            limpiarCampos();
-        });
-
-        btnCancelar.addActionListener(e -> {
-            limpiarCampos();
-            setNuevoModo(false);
-            setEditMode(false);
-            habilitarCampos(false);
-            btnAgregar.setText("Nuevo");
-            btnActualizar.setText("Actualizar");
-        });
-
         btnBuscar.addActionListener(e -> controlador.buscarUsuarios());
         btnLimpiarBusqueda.addActionListener(e -> controlador.limpiarBusqueda());
+
         cbTipoUsuario.addActionListener(e -> controlador.actualizarIdDinamicamente());
 
         // Panel superior que contiene panelCampos y panelBusqueda
@@ -217,89 +150,13 @@ public class AdministracionUsuarios extends JPanel {
         // Agregar paneles al JPanel principal
         add(panelSuperior, BorderLayout.NORTH);
         add(scrollPane, BorderLayout.CENTER);
-        add(panelBotones, BorderLayout.SOUTH);
 
         habilitarCampos(false);
         controlador.cargarUsuariosEnTabla();
         controlador.actualizarIdDinamicamente();
     }
 
-    // Getters para acceder a los componentes en el controlador
-
-    public JPanel getPanelBotones() {
-        return panelBotones;
-    }
-
-    public JButton getBtnAgregar() {
-        return btnAgregar;
-    }
-
-    public JButton getBtnActualizar() {
-        return btnActualizar;
-    }
-
-    public JButton getBtnEliminar() {
-        return btnEliminar;
-    }
-
-    public JButton getBtnCancelar() {
-        return btnCancelar;
-    }
-
-    public JTextField getTxtId() {
-        return txtId;
-    }
-
-    public JTextField getTxtNombres() {
-        return txtNombres;
-    }
-
-    public JTextField getTxtApellidos() {
-        return txtApellidos;
-    }
-
-    public JPasswordField getTxtClave() {
-        return txtClave;
-    }
-
-    public JTextField getTxtEmail() {
-        return txtEmail;
-    }
-
-    public JTextField getTxtTelefono() {
-        return txtTelefono;
-    }
-
-    public JComboBox<String> getCbTipoUsuario() {
-        return cbTipoUsuario;
-    }
-
-    public JSpinner getSpinnerLimitePrestamos() {
-        return spinnerLimitePrestamos;
-    }
-
-    public JDatePickerImpl getDatePicker() {
-        return datePicker;
-    }
-
-    public JTable getTableUsuarios() {
-        return tableUsuarios;
-    }
-
-    public DefaultTableModel getTableModel() {
-        return tableModel;
-    }
-
-    public JTextField getTxtBuscar() {
-        return txtBuscar;
-    }
-
-    public JComboBox<String> getCbFiltroBusqueda() {
-        return cbFiltroBusqueda;
-    }
-
-    // Métodos adicionales para componentes
-
+    // Métodos adicionales
     public void habilitarCampos(boolean habilitar) {
         txtNombres.setEnabled(habilitar);
         txtApellidos.setEnabled(habilitar);
@@ -333,11 +190,6 @@ public class AdministracionUsuarios extends JPanel {
         datePicker.getModel().setSelected(true);
     }
 
-    private void aplicarEstiloBoton(JButton boton, Font fuente, Dimension tamaño) {
-        boton.setFont(fuente);
-        boton.setPreferredSize(tamaño);
-    }
-
     // Métodos para actualizar los modos
     public boolean isNuevoModo() {
         return nuevoModo;
@@ -355,6 +207,78 @@ public class AdministracionUsuarios extends JPanel {
         this.editMode = editMode;
     }
 
+    // Métodos Getter para el Controlador
+
+    // Getters para los TextFields
+    public JTextField getTxtId() {
+        return txtId;
+    }
+
+    public JTextField getTxtNombres() {
+        return txtNombres;
+    }
+
+    public JTextField getTxtApellidos() {
+        return txtApellidos;
+    }
+
+    public JPasswordField getTxtClave() {
+        return txtClave;
+    }
+
+    public JTextField getTxtEmail() {
+        return txtEmail;
+    }
+
+    public JTextField getTxtTelefono() {
+        return txtTelefono;
+    }
+
+    public JTextField getTxtBuscar() {
+        return txtBuscar;
+    }
+
+    // Getters para los ComboBoxes
+    public JComboBox<String> getCbTipoUsuario() {
+        return cbTipoUsuario;
+    }
+
+    public JComboBox<String> getCbFiltroBusqueda() {
+        return cbFiltroBusqueda;
+    }
+
+    // Getters para otros componentes
+    public JDatePickerImpl getDatePicker() {
+        return datePicker;
+    }
+
+    public JSpinner getSpinnerLimitePrestamos() {
+        return spinnerLimitePrestamos;
+    }
+
+    public JTable getTableUsuarios() {
+        return tableUsuarios;
+    }
+
+    public DefaultTableModel getTableModel() {
+        return tableModel;
+    }
+
+    // Getters para los Botones de búsqueda
+    public JButton getBtnBuscar() {
+        return btnBuscar;
+    }
+
+    public JButton getBtnLimpiarBusqueda() {
+        return btnLimpiarBusqueda;
+    }
+
+    // Getter para el Panel de Búsqueda
+    public JPanel getPanelBusqueda() {
+        return panelBusqueda;
+    }
+
+    // Renderer para ocultar la contraseña en la tabla
     private class PasswordRenderer extends DefaultTableCellRenderer {
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {

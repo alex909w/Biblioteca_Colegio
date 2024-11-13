@@ -1,7 +1,7 @@
 package com.biblioteca.acciones;
 
-import javax.swing.JPanel;
-import javax.swing.JLabel;
+import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 
 import com.biblioteca.utilidades.DateLabelFormatter;
 import com.biblioteca.dao.GestionInventarioDAO;
@@ -9,8 +9,6 @@ import org.jdatepicker.impl.JDatePickerImpl;
 import org.jdatepicker.impl.JDatePanelImpl;
 import org.jdatepicker.impl.UtilDateModel;
 
-import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
@@ -23,12 +21,13 @@ public class EditarInventario extends JPanel {
     private GestionInventarioDAO gestionInventarioDAO;
     private ArrayList<Component> listaCampos;
     private ArrayList<String> listaNombresColumnas;
+    private ArrayList<ArrayList<String>> datosOriginales;
     private String nombreFormularioSeleccionado;
     private String idInventario;
+    private JPanel panelCampos;
+    private JTextField txtBuscar;
 
-    // Constructor modificado para recibir los parámetros necesarios
     public EditarInventario(String nombreFormulario, String idInventario) {
-        add(new JLabel("Editar Inventario"));
         this.nombreFormularioSeleccionado = nombreFormulario;
         this.idInventario = idInventario;
 
@@ -42,36 +41,73 @@ public class EditarInventario extends JPanel {
             return;
         }
 
+        inicializarComponentes();
         cargarCamposConDatos();
     }
 
-    public EditarInventario() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    private void inicializarComponentes() {
+        JPanel panelBusqueda = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
+        JLabel lblBuscar = new JLabel("Buscar:");
+        txtBuscar = new JTextField(20);
+
+        // Añadir ActionListener para filtrar datos al escribir en el campo de búsqueda
+        txtBuscar.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            public void insertUpdate(javax.swing.event.DocumentEvent e) {
+                filtrarDatos();
+            }
+            public void removeUpdate(javax.swing.event.DocumentEvent e) {
+                filtrarDatos();
+            }
+            public void changedUpdate(javax.swing.event.DocumentEvent e) {
+                filtrarDatos();
+            }
+        });
+
+        panelBusqueda.add(lblBuscar);
+        panelBusqueda.add(txtBuscar);
+        add(panelBusqueda, BorderLayout.NORTH);
+
+        // Panel para los campos de datos
+        panelCampos = new JPanel();
+        panelCampos.setLayout(new BoxLayout(panelCampos, BoxLayout.Y_AXIS));
+        JScrollPane scrollPane = new JScrollPane(panelCampos);
+        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        add(scrollPane, BorderLayout.CENTER);
+
+        // Panel de botones
+        JPanel panelBotones = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
+        JButton btnGuardar = new JButton("Guardar Cambios");
+        btnGuardar.addActionListener(e -> guardarCambios());
+        panelBotones.add(btnGuardar);
+        add(panelBotones, BorderLayout.SOUTH);
     }
 
     private void cargarCamposConDatos() {
         listaCampos = new ArrayList<>();
         listaNombresColumnas = new ArrayList<>();
 
-        JPanel panelCampos = new JPanel();
-        panelCampos.setLayout(new BoxLayout(panelCampos, BoxLayout.Y_AXIS));
-        JScrollPane scrollPane = new JScrollPane(panelCampos);
-        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-        add(scrollPane, BorderLayout.CENTER);
-
-        JPanel panelBotones = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
-        JButton btnGuardar = new JButton("Guardar Cambios");
-        btnGuardar.addActionListener(e -> guardarCambios());
-        panelBotones.add(btnGuardar);
-        add(panelBotones, BorderLayout.SOUTH);
+        panelCampos.removeAll();
 
         try {
-            ArrayList<String> columnas = gestionInventarioDAO.obtenerColumnasDeTabla(nombreFormularioSeleccionado);
+            listaNombresColumnas = gestionInventarioDAO.obtenerColumnasDeTabla(nombreFormularioSeleccionado);
             ArrayList<String> datosInventario = gestionInventarioDAO.obtenerDatosPorId(nombreFormularioSeleccionado, idInventario);
 
-            for (int i = 0; i < columnas.size(); i++) {
-                String columna = columnas.get(i);
-                String valor = datosInventario.get(i);
+            datosOriginales = new ArrayList<>();
+            datosOriginales.add(new ArrayList<>(datosInventario));
+
+            mostrarDatos(datosOriginales);
+
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(this, "Error al cargar los datos del inventario: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void mostrarDatos(ArrayList<ArrayList<String>> datos) {
+        panelCampos.removeAll();
+        for (ArrayList<String> fila : datos) {
+            for (int i = 0; i < listaNombresColumnas.size(); i++) {
+                String columna = listaNombresColumnas.get(i);
+                String valor = fila.get(i);
 
                 JPanel panelCampo = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
                 panelCampo.add(new JLabel(columna + ":"));
@@ -105,16 +141,28 @@ public class EditarInventario extends JPanel {
                     panelCampo.add(txtCampo);
                 }
 
-                listaNombresColumnas.add(columna);
                 panelCampos.add(panelCampo);
             }
-
-            panelCampos.revalidate();
-            panelCampos.repaint();
-
-        } catch (SQLException e) {
-            JOptionPane.showMessageDialog(this, "Error al cargar los datos del inventario: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
+
+        panelCampos.revalidate();
+        panelCampos.repaint();
+    }
+
+    private void filtrarDatos() {
+        String filtro = txtBuscar.getText().toLowerCase();
+        ArrayList<ArrayList<String>> datosFiltrados = new ArrayList<>();
+
+        for (ArrayList<String> fila : datosOriginales) {
+            for (String valor : fila) {
+                if (valor.toLowerCase().contains(filtro)) {
+                    datosFiltrados.add(fila);
+                    break;
+                }
+            }
+        }
+
+        mostrarDatos(datosFiltrados);
     }
 
     private void guardarCambios() {

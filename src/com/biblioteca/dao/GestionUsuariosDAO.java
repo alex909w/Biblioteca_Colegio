@@ -9,6 +9,12 @@ import org.mindrot.jbcrypt.BCrypt;
 import java.util.regex.Pattern;
 
 public class GestionUsuariosDAO {
+    
+    private Connection conexion;
+
+    public GestionUsuariosDAO() {
+        this.conexion = ConexionBaseDatos.getConexion();
+    }
 
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[\\w.%+-]+@[\\w.-]+\\.[a-zA-Z]{2,6}$");
 
@@ -293,5 +299,34 @@ public class GestionUsuariosDAO {
         }
 
         return tipoUsuario;
+    }
+    
+    public boolean correoRegistrado(String correo) {
+        String sql = "SELECT COUNT(*) FROM usuarios WHERE correo = ?";
+        
+        try (PreparedStatement stmt = conexion.prepareStatement(sql)) {
+            stmt.setString(1, correo);
+            ResultSet rs = stmt.executeQuery();
+            
+            if (rs.next()) {
+                return rs.getInt(1) > 0;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        
+        return false;
+    }
+
+    public void guardarTokenRecuperacion(String correo, String token) {
+        String sql = "INSERT INTO recuperacion_tokens (correo, token, expiracion) VALUES (?, ?, NOW() + INTERVAL 1 HOUR)";
+        
+        try (PreparedStatement stmt = conexion.prepareStatement(sql)) {
+            stmt.setString(1, correo);
+            stmt.setString(2, token);
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 }
