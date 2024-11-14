@@ -71,7 +71,7 @@ public class MenuAdministrador extends JFrame {
         return panelSuperior;
     }
 
-    private JPanel crearPanelNavegacion() {
+      private JPanel crearPanelNavegacion() {
         JPanel panelNavegacion = new JPanel();
         panelNavegacion.setLayout(new BoxLayout(panelNavegacion, BoxLayout.Y_AXIS));
         panelNavegacion.setBackground(FONDO_LATERAL);
@@ -95,7 +95,7 @@ public class MenuAdministrador extends JFrame {
         btnPrestamos.addActionListener(e -> toggleSubMenuPrestamos());
         btnMora.addActionListener(e -> toggleSubMenuMora());
         btnAdministracion.addActionListener(e -> toggleSubMenuAdministracion());
-        btnSalir.addActionListener(e -> System.exit(0));
+        btnSalir.addActionListener(e -> regresarAlLogin());
 
         panelNavegacion.add(btnGestionUsuarios);
         panelNavegacion.add(crearSubMenuGestionUsuarios());
@@ -151,6 +151,37 @@ public class MenuAdministrador extends JFrame {
 
         return boton;
     }
+
+    //private void regresarAlLogin() {
+    //int confirm = JOptionPane.showConfirmDialog(
+   //     this,
+   //     "¿Está seguro de que desea cerrar sesión?",
+   //     "Confirmar Cierre de Sesión",
+    //    JOptionPane.YES_NO_OPTION
+   // );
+   // if (confirm == JOptionPane.YES_OPTION) {
+   //     System.out.println("Cerrando MenuAdministrador...");
+   //     dispose(); // Cierra el MenuAdministrador
+        
+        // Intenta abrir el login
+    //    SwingUtilities.invokeLater(() -> {
+      //      System.out.println("Abriendo BibliotecaLogin...");
+        //    try {
+          //      BibliotecaLogin loginFrame = new BibliotecaLogin();
+       //         loginFrame.setVisible(true);
+       //         System.out.println("BibliotecaLogin abierto exitosamente.");
+       //     } catch (Exception e) {
+       //         System.err.println("Error al abrir BibliotecaLogin: " + e.getMessage());
+       //         e.printStackTrace();
+       //     }
+       // });
+   // }
+//}
+        private void regresarAlLogin() {
+    dispose(); // Cierra el MenuAdministrador
+    SwingUtilities.invokeLater(() -> new BibliotecaLogin().setVisible(true)); // Reinicia la clase
+}
+
 
     private JPanel crearSubMenuPrestamos() {
         subMenuPrestamos = new JPanel();
@@ -235,6 +266,7 @@ public class MenuAdministrador extends JFrame {
 
         return subMenuAdministracion;
     }
+    
 
     private void mostrarContenido(JPanel panel) {
         panelContenido.removeAll();
@@ -283,10 +315,6 @@ public class MenuAdministrador extends JFrame {
         subMenuGestionUsuarios.setVisible(subMenuGestionUsuariosVisible);
         revalidate();
         repaint();
-    }
-
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new MenuAdministrador().setVisible(true));
     }
     
 
@@ -365,6 +393,12 @@ public class MenuAdministrador extends JFrame {
 
         return subMenuGestionInventario;
     }
-
+   //public static void main(String[] args) {
+   //     SwingUtilities.invokeLater(() -> new BibliotecaLogin().setVisible(true));
+   // }
+    
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> new MenuAdministrador().setVisible(true));
+    }
 }
 

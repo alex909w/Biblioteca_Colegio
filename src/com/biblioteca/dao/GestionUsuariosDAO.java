@@ -180,13 +180,12 @@ public class GestionUsuariosDAO {
     }
 
     public void cargarUsuariosEnTabla(DefaultTableModel tableModel, JPanel panel) {
-    Connection conexion = ConexionBaseDatos.getConexion();
-
-    if (conexion != null) {
         String query = "SELECT * FROM Usuarios";
-        try (PreparedStatement statement = conexion.prepareStatement(query)) {
-            ResultSet resultSet = statement.executeQuery();
-            tableModel.setRowCount(0); // Limpiar tabla
+        try (Connection conexion = ConexionBaseDatos.getConexion();
+             PreparedStatement statement = conexion.prepareStatement(query);
+             ResultSet resultSet = statement.executeQuery()) {
+             
+            tableModel.setRowCount(0); // Limpiar tabla existente
 
             while (resultSet.next()) {
                 tableModel.addRow(new Object[]{
@@ -203,50 +202,46 @@ public class GestionUsuariosDAO {
             }
         } catch (SQLException e) {
             JOptionPane.showMessageDialog(panel, "Error al cargar usuarios: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-        } finally {
-            ConexionBaseDatos.cerrarConexion();
         }
-    } else {
-        System.err.println("Error: Conexión a la base de datos fallida.");
     }
-}
 
 
     public int generarSiguienteId(String tipoUsuario) {
-        Connection conexion = ConexionBaseDatos.getConexion();
-        int siguienteId = 1;
-        String inicial = "";
+    int siguienteId = 1;
+    String inicial = "";
 
-        switch (tipoUsuario) {
-            case "Administrador":
-                inicial = "AD";
-                break;
-            case "Profesor":
-                inicial = "PR";
-                break;
-            case "Alumno":
-                inicial = "AL";
-                break;
-        }
-
-        if (conexion != null && !inicial.isEmpty()) {
-            String query = "SELECT MAX(CAST(SUBSTRING(id_usuario, 3) AS UNSIGNED)) AS max_id " +
-                    "FROM Usuarios WHERE id_usuario LIKE ?";
-            try (PreparedStatement statement = conexion.prepareStatement(query)) {
-                statement.setString(1, inicial + "%");
-                ResultSet resultSet = statement.executeQuery();
-
-                if (resultSet.next()) {
-                    int maxId = resultSet.getInt("max_id");
-                    siguienteId = maxId + 1;
-                }
-            } catch (SQLException e) {
-                System.err.println("Error al generar el siguiente ID: " + e.getMessage());
-            }
-        }
-
-        return siguienteId;
+    switch (tipoUsuario) {
+        case "Administrador":
+            inicial = "AD";
+            break;
+        case "Profesor":
+            inicial = "PR";
+            break;
+        case "Alumno":
+            inicial = "AL";
+            break;
     }
+
+    if (!inicial.isEmpty()) {
+        String query = "SELECT MAX(CAST(SUBSTRING(id_usuario, 3) AS UNSIGNED)) AS max_id " +
+                       "FROM Usuarios WHERE id_usuario LIKE ?";
+        try (Connection conexion = ConexionBaseDatos.getConexion();
+             PreparedStatement statement = conexion.prepareStatement(query)) {
+            statement.setString(1, inicial + "%");
+            ResultSet resultSet = statement.executeQuery();
+
+            if (resultSet.next()) {
+                int maxId = resultSet.getInt("max_id");
+                siguienteId = maxId + 1;
+            }
+        } catch (SQLException e) {
+            System.err.println("Error al generar el siguiente ID: " + e.getMessage());
+        }
+    }
+
+    return siguienteId;
+}
+
 
     public boolean validarCredenciales(String usuario, String contrasena) {
         boolean valido = false;
@@ -329,4 +324,100 @@ public class GestionUsuariosDAO {
             e.printStackTrace();
         }
     }
+
+public Object[] obtenerUsuarioPorId(String idUsuario) {
+    String query = "SELECT id_usuario, nombre, apellido, tipo_usuario, email, clave, telefono, fecha_registro, limite_prestamos " +
+                   "FROM Usuarios WHERE id_usuario = ?";
+    try (Connection conexion = ConexionBaseDatos.getConexion();
+         PreparedStatement statement = conexion.prepareStatement(query)) {
+
+        statement.setString(1, idUsuario);
+        ResultSet resultSet = statement.executeQuery();
+
+        if (resultSet.next()) {
+            return new Object[]{
+                resultSet.getString("id_usuario"),           // ID del usuario
+                resultSet.getString("nombre"),              // Nombre
+                resultSet.getString("apellido"),            // Apellido
+                resultSet.getString("tipo_usuario"),        // Tipo de usuario
+                resultSet.getString("email"),               // Correo electrónico
+                resultSet.getString("clave"),               // Contraseña (puede estar encriptada)
+                resultSet.getString("telefono"),            // Teléfono
+                resultSet.getString("fecha_registro"),      // Fecha de registro
+                resultSet.getInt("limite_prestamos")        // Límite de préstamos
+            };
+        }
+    } catch (SQLException e) {
+        System.err.println("Error al obtener datos del usuario: " + e.getMessage());
+    }
+    return null; // Retorna null si no se encuentra el usuario o ocurre un error
+}
+
+public Object[] obtenerDatosUsuario(String idUsuario) {
+    String query = "SELECT id_usuario, nombre, apellido, tipo_usuario, email, clave, telefono, fecha_registro, limite_prestamos " +
+                   "FROM Usuarios WHERE id_usuario = ?";
+    try (Connection conexion = ConexionBaseDatos.getConexion();
+         PreparedStatement statement = conexion.prepareStatement(query)) {
+
+        statement.setString(1, idUsuario);
+        ResultSet resultSet = statement.executeQuery();
+
+        if (resultSet.next()) {
+            return new Object[]{
+                resultSet.getString("id_usuario"),           // ID del usuario
+                resultSet.getString("nombre"),              // Nombre
+                resultSet.getString("apellido"),            // Apellido
+                resultSet.getString("tipo_usuario"),        // Tipo de usuario
+                resultSet.getString("email"),               // Correo electrónico
+                resultSet.getString("clave"),               // Contraseña (puede estar encriptada)
+                resultSet.getString("telefono"),            // Teléfono
+                resultSet.getString("fecha_registro"),      // Fecha de registro
+                resultSet.getInt("limite_prestamos")        // Límite de préstamos
+            };
+        }
+    } catch (SQLException e) {
+        System.err.println("Error al obtener datos del usuario: " + e.getMessage());
+    }
+    return null; // Retorna null si no se encuentra el usuario o ocurre un error
+}
+
+
+public String obtenerEmailPorId(String id) {
+    String query = "SELECT email FROM Usuarios WHERE id_usuario = ?";
+    try (Connection conexion = ConexionBaseDatos.getConexion();
+         PreparedStatement statement = conexion.prepareStatement(query)) {
+
+        statement.setString(1, id);
+        ResultSet resultSet = statement.executeQuery();
+
+        if (resultSet.next()) {
+            return resultSet.getString("email"); // Devuelve el correo electrónico si existe
+        }
+    } catch (SQLException e) {
+        System.err.println("Error al obtener el email por ID: " + e.getMessage());
+    }
+    return null; // Retorna null si no se encuentra el ID o ocurre un error
+}
+
+public String obtenerNombreCompletoPorCorreo(String correo) {
+    String nombreCompleto = null;
+    String query = "SELECT CONCAT(nombre, ' ', apellido) AS nombre_completo FROM Usuarios WHERE email = ?";
+    
+    try (Connection conexion = ConexionBaseDatos.getConexion();
+         PreparedStatement statement = conexion.prepareStatement(query)) {
+        statement.setString(1, correo);
+        ResultSet resultSet = statement.executeQuery();
+        
+        if (resultSet.next()) {
+            nombreCompleto = resultSet.getString("nombre_completo");
+        }
+    } catch (SQLException e) {
+        System.err.println("Error al obtener el nombre completo del usuario: " + e.getMessage());
+    }
+    
+    return nombreCompleto;
+}
+
+
+
 }

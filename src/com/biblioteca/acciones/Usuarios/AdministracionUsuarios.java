@@ -11,6 +11,7 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.Properties;
 
 public class AdministracionUsuarios extends JPanel {
@@ -24,6 +25,8 @@ public class AdministracionUsuarios extends JPanel {
     private JSpinner spinnerLimitePrestamos;
     private JPanel panelBusqueda;
     private JButton btnBuscar, btnLimpiarBusqueda;
+
+    private JButton btnNuevo, btnActualizar, btnEliminar, btnGuardar, btnCancelar;
 
     private boolean editMode = false;
     private boolean nuevoModo = false;
@@ -67,6 +70,41 @@ public class AdministracionUsuarios extends JPanel {
         properties.put("text.year", "Año");
         JDatePanelImpl datePanel = new JDatePanelImpl(model, properties);
         datePicker = new JDatePickerImpl(datePanel, new DateLabelFormatter());
+
+        // Inicialización de botones de acción
+        btnNuevo = new JButton("Nuevo");
+        btnActualizar = new JButton("Actualizar");
+        btnEliminar = new JButton("Eliminar");
+        btnGuardar = new JButton("Guardar");
+        btnCancelar = new JButton("Cancelar");
+
+        // Inicializar cbFiltroBusqueda
+        cbFiltroBusqueda = new JComboBox<>(new String[]{"Nombre", "Correo", "Tipo de Usuario"});
+        btnBuscar = new JButton("Buscar");
+        btnLimpiarBusqueda = new JButton("Limpiar");
+
+        // Configurar fuentes y tamaños para los botones
+        Font buttonFont = new Font("Arial", Font.BOLD, 16);
+        btnNuevo.setFont(buttonFont);
+        btnActualizar.setFont(buttonFont);
+        btnEliminar.setFont(buttonFont);
+        btnGuardar.setFont(buttonFont);
+        btnCancelar.setFont(buttonFont);
+        btnBuscar.setFont(buttonFont);
+        btnLimpiarBusqueda.setFont(buttonFont);
+
+        Dimension buttonSize = new Dimension(150, 40);
+        btnNuevo.setPreferredSize(buttonSize);
+        btnActualizar.setPreferredSize(buttonSize);
+        btnEliminar.setPreferredSize(buttonSize);
+        btnGuardar.setPreferredSize(buttonSize);
+        btnCancelar.setPreferredSize(buttonSize);
+        btnBuscar.setPreferredSize(new Dimension(100, 40));
+        btnLimpiarBusqueda.setPreferredSize(new Dimension(100, 40));
+
+        // Inicialmente, ocultar botones "Guardar" y "Cancelar"
+        btnGuardar.setVisible(false);
+        btnCancelar.setVisible(false);
 
         // Configurar GridBagConstraints
         GridBagConstraints gbcCampos = new GridBagConstraints();
@@ -120,10 +158,6 @@ public class AdministracionUsuarios extends JPanel {
         panelBusqueda = new JPanel(new FlowLayout(FlowLayout.LEFT));
         JLabel lblBuscar = new JLabel("Buscar:");
         txtBuscar = new JTextField(20);
-        cbFiltroBusqueda = new JComboBox<>(new String[]{"Nombre", "Correo", "Tipo de Usuario"});
-        btnBuscar = new JButton("Buscar");
-        btnLimpiarBusqueda = new JButton("Limpiar");
-
         panelBusqueda.add(lblBuscar);
         panelBusqueda.add(txtBuscar);
         panelBusqueda.add(cbFiltroBusqueda);
@@ -131,14 +165,34 @@ public class AdministracionUsuarios extends JPanel {
         panelBusqueda.add(btnLimpiarBusqueda);
 
         // Tabla para mostrar los usuarios
-        tableModel = new DefaultTableModel(new Object[]{"ID", "Nombres", "Apellidos", "Tipo de Usuario", "Correo Electrónico", "Clave", "Teléfono", "Fecha de Registro", "Límite de Préstamos"}, 0);
+        tableModel = new DefaultTableModel(new Object[]{"ID", "Nombres", "Apellidos", "Tipo de Usuario", "Correo Electrónico", "Clave", "Teléfono", "Fecha de Registro", "Límite de Préstamos"}, 0) {
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+        
         tableUsuarios = new JTable(tableModel);
         tableUsuarios.getColumn("Clave").setCellRenderer(new PasswordRenderer());
+        tableUsuarios.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         JScrollPane scrollPane = new JScrollPane(tableUsuarios);
+
+        // Panel de Botones de Acción
+        JPanel panelBotones = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 10));
+        panelBotones.add(btnNuevo);
+        panelBotones.add(btnActualizar);
+        panelBotones.add(btnEliminar);
+        panelBotones.add(btnGuardar);
+        panelBotones.add(btnCancelar);
 
         // Listeners para los botones
         btnBuscar.addActionListener(e -> controlador.buscarUsuarios());
         btnLimpiarBusqueda.addActionListener(e -> controlador.limpiarBusqueda());
+
+        btnNuevo.addActionListener(e -> controlador.manejarBotonNuevo());
+        btnActualizar.addActionListener(e -> controlador.manejarBotonActualizar());
+        btnEliminar.addActionListener(e -> controlador.manejarBotonEliminar());
+        btnGuardar.addActionListener(e -> controlador.manejarBotonGuardar());
+        btnCancelar.addActionListener(e -> controlador.manejarBotonCancelar());
 
         cbTipoUsuario.addActionListener(e -> controlador.actualizarIdDinamicamente());
 
@@ -150,6 +204,7 @@ public class AdministracionUsuarios extends JPanel {
         // Agregar paneles al JPanel principal
         add(panelSuperior, BorderLayout.NORTH);
         add(scrollPane, BorderLayout.CENTER);
+        add(panelBotones, BorderLayout.SOUTH);
 
         habilitarCampos(false);
         controlador.cargarUsuariosEnTabla();
@@ -169,6 +224,7 @@ public class AdministracionUsuarios extends JPanel {
     }
 
     public void limpiarCampos() {
+        txtId.setText("");
         txtNombres.setText("");
         txtApellidos.setText("");
         txtClave.setText("");
@@ -273,9 +329,25 @@ public class AdministracionUsuarios extends JPanel {
         return btnLimpiarBusqueda;
     }
 
-    // Getter para el Panel de Búsqueda
-    public JPanel getPanelBusqueda() {
-        return panelBusqueda;
+    // Getters para los Botones de Acción
+    public JButton getBtnNuevo() {
+        return btnNuevo;
+    }
+
+    public JButton getBtnActualizar() {
+        return btnActualizar;
+    }
+
+    public JButton getBtnEliminar() {
+        return btnEliminar;
+    }
+
+    public JButton getBtnGuardar() {
+        return btnGuardar;
+    }
+
+    public JButton getBtnCancelar() {
+        return btnCancelar;
     }
 
     // Renderer para ocultar la contraseña en la tabla
@@ -289,4 +361,6 @@ public class AdministracionUsuarios extends JPanel {
             return c;
         }
     }
+    
+    
 }

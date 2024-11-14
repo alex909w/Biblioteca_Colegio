@@ -23,38 +23,42 @@ public class BibliotecaLoginController {
     }
 
     public void iniciarSesion() {
-        String correo = vista.getCorreo();
-        String contrasena = vista.getContrasena();
+    String correo = vista.getCorreo();
+    String contrasena = vista.getContrasena();
 
-        if (correo.isEmpty() || contrasena.isEmpty()) {
-            vista.mostrarMensaje("Por favor, ingrese su correo y contraseña.");
-            return;
-        }
-
-        if (dao.validarCredenciales(correo, contrasena)) {
-            String tipoUsuario = dao.obtenerTipoUsuario(correo);
-            vista.mostrarMensaje("Login exitoso!");
-            vista.mostrarDialogo("Bienvenido, " + correo);
-            vista.dispose();
-
-            switch (tipoUsuario) {
-                case "Administrador":
-                    new MenuAdministrador().setVisible(true);
-                    break;
-                case "Profesor":
-                    new MenuProfesor().setVisible(true);
-                    break;
-                case "Alumno":
-                    new MenuAlumno().setVisible(true);
-                    break;
-                default:
-                    vista.mostrarMensaje("Tipo de usuario no válido");
-                    System.err.println("Error: Tipo de usuario desconocido: " + tipoUsuario);
-            }
-        } else {
-            vista.mostrarMensaje("Correo o contraseña incorrectos");
-        }
+    if (correo.isEmpty() || contrasena.isEmpty()) {
+        vista.mostrarMensaje("Por favor, ingrese su correo y contraseña.");
+        return;
     }
+
+    if (dao.validarCredenciales(correo, contrasena)) {
+        String tipoUsuario = dao.obtenerTipoUsuario(correo);
+        String nombreCompleto = dao.obtenerNombreCompletoPorCorreo(correo); // Obtener nombre completo
+
+        vista.mostrarMensaje("Login exitoso!");
+        vista.mostrarDialogo("Bienvenido, " + nombreCompleto); // Mostrar nombre y apellido
+        vista.dispose();
+
+        switch (tipoUsuario) {
+            case "Administrador":
+                new MenuAdministrador().setVisible(true);
+                break;
+            case "Profesor":
+                new MenuProfesor().setVisible(true);
+                break;
+            case "Alumno":
+                new MenuAlumno().setVisible(true);
+                break;
+            default:
+                vista.mostrarMensaje("Tipo de usuario no válido");
+                System.err.println("Error: Tipo de usuario desconocido: " + tipoUsuario);
+        }
+    } else {
+        vista.mostrarMensaje("Correo o contraseña incorrectos");
+    }
+}
+
+
 
     public void recuperarContrasena() {
         // Solicitar el correo electrónico del usuario
