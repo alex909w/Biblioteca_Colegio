@@ -14,8 +14,6 @@ import java.util.stream.Collectors;
 import javax.swing.border.Border;
 
 public class EditarFormulario extends JPanel {
-    
-    // Inician los estilos  
 
     private GestionFormularioDAO tipoDocumentoDAO;
     private JComboBox<String> comboFormularios;
@@ -63,8 +61,6 @@ public class EditarFormulario extends JPanel {
         add(panelBotones, BorderLayout.SOUTH);
 
     }
-    
-
 
     private JPanel crearPanelSuperior() {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
@@ -147,8 +143,6 @@ public class EditarFormulario extends JPanel {
         });
         return boton;
     }
-    
-        // Finaliza los estilos  
 
     private void guardarCambios() {
         String nombreFormulario = ((String) comboFormularios.getSelectedItem()).toUpperCase();
@@ -276,6 +270,9 @@ public class EditarFormulario extends JPanel {
             JOptionPane.showMessageDialog(this, "Error al cargar los tipos de documentos: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
             return new ArrayList<>();
         }
+    }
+    private void mostrarError(String mensaje) {
+        JOptionPane.showMessageDialog(this, mensaje, "Error", JOptionPane.ERROR_MESSAGE);
     }
 
 }

@@ -1,13 +1,18 @@
 package com.biblioteca.utilidades;
 
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Validaciones {
 
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[\\w.%+-]+@[\\w.-]+\\.[a-zA-Z]{2,6}$");
 
-    public static boolean esCorreoValido(String email) {
-        return EMAIL_PATTERN.matcher(email).matches();
+      public static boolean esCorreoValido(String email) {
+        if (email == null) {
+            return false;
+        }
+        Matcher matcher = EMAIL_PATTERN.matcher(email);
+        return matcher.matches();
     }
 
     public static String validarDatosUsuario(String nombre, String apellido, String clave, String email, String telefono, int limitePrestamos) {
@@ -41,4 +46,5 @@ public class Validaciones {
 
         return errorBuilder.toString();
     }
+    
 }
