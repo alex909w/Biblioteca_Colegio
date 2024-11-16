@@ -3,56 +3,48 @@ package com.biblioteca.acciones;
 import javax.swing.JPanel;
 import javax.swing.JLabel;
 import com.biblioteca.dao.GestionInventarioDAO;
-import com.biblioteca.utilidades.DateLabelFormatter;
-
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
+import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.sql.SQLException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Properties;
-import java.util.stream.Collectors;
-import org.jdatepicker.impl.JDatePanelImpl;
-import org.jdatepicker.impl.JDatePickerImpl;
-import org.jdatepicker.impl.UtilDateModel;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 
-public class AgregarInventario extends JPanel {
-
+public class ActualizarInventario extends JPanel {
     private GestionInventarioDAO gestionInventarioDAO;
+    private JTable tablaInventarios;
+    private DefaultTableModel modeloTabla;
     private JComboBox<String> comboFormularios;
-    private JTextField txtFiltro;
-    private JPanel panelCampos;
-    private ArrayList<Component> listaCampos;
-    private ArrayList<String> listaNombresColumnas;
-    private String nombreFormularioSeleccionado;
-    private List<String> todosLosFormularios;
+    private JTextField txtBuscar;
+    private String nombreTablaSeleccionada;
+    private JButton btnEditar;
+    private ArrayList<ArrayList<String>> datosOriginales;
 
-
-// Inician los estilos   
-
-    public AgregarInventario() {
+    
+    // Inician los estilos  
+    
+    public ActualizarInventario() {
         setLayout(new BorderLayout(10, 10));
         setBorder(new EmptyBorder(10, 10, 10, 10));
         setBackground(new Color(240, 240, 250)); // Fondo moderno
 
+        // Título del panel
+        add(new JLabel("Actualizar Entrada/Salida de Inventario", SwingConstants.CENTER), BorderLayout.NORTH);
+
+        // Inicializar DAO
         try {
             gestionInventarioDAO = new GestionInventarioDAO();
-            todosLosFormularios = gestionInventarioDAO.obtenerTiposDocumentos();
-
-            todosLosFormularios = todosLosFormularios.stream()
-                    .map(nombre -> nombre.toLowerCase().endsWith("_tabla") ? nombre.substring(0, nombre.length() - 6) : nombre)
-                    .collect(Collectors.toList());
-
         } catch (SQLException e) {
             JOptionPane.showMessageDialog(this, "Error al conectar con la base de datos: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            return;
         }
 
-        // Panel superior
+        // Panel Superior: ComboBox y Búsqueda
+               // Panel superior
         JPanel panelSuperior = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
         panelSuperior.setBackground(new Color(200, 220, 255));
         panelSuperior.setBorder(BorderFactory.createLineBorder(new Color(150, 180, 255), 1));
@@ -62,229 +54,235 @@ public class AgregarInventario extends JPanel {
         lblTitulo.setForeground(new Color(50, 50, 100));
         panelSuperior.add(lblTitulo);
 
-        txtFiltro = new JTextField(15);
-        txtFiltro.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        txtFiltro.setBorder(BorderFactory.createLineBorder(new Color(100, 150, 255), 1));
-        txtFiltro.getDocument().addDocumentListener(new DocumentListener() {
-            @Override
-            public void insertUpdate(DocumentEvent e) {
-                filtrarComboBox();
-            }
-
-            @Override
-            public void removeUpdate(DocumentEvent e) {
-                filtrarComboBox();
-            }
-
-            @Override
-            public void changedUpdate(DocumentEvent e) {
-                filtrarComboBox();
-            }
-        });
-        panelSuperior.add(txtFiltro);
-
-        comboFormularios = new JComboBox<>(todosLosFormularios.toArray(new String[0]));
-        comboFormularios.setPreferredSize(new Dimension(200, 25));
-        comboFormularios.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        comboFormularios.setBorder(BorderFactory.createLineBorder(new Color(100, 150, 255), 1));
-        comboFormularios.addActionListener(e -> cargarCampos());
+        // Cargar las tablas en el combo box, con la opción "Todas las Tablas"
+        comboFormularios = new JComboBox<>(cargarTiposDocumentos());
+        comboFormularios.addActionListener(e -> cargarTabla());
         panelSuperior.add(comboFormularios);
+
+        // Campo de búsqueda
+        panelSuperior.add(new JLabel("Buscar:"));
+        txtBuscar = new JTextField(15);
+        txtBuscar.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        txtBuscar.setBorder(BorderFactory.createLineBorder(new Color(100, 150, 255), 1));
+        txtBuscar.getDocument().addDocumentListener(new DocumentListener() {
+            public void insertUpdate(DocumentEvent e) { filtrarTabla(); }
+            public void removeUpdate(DocumentEvent e) { filtrarTabla(); }
+            public void changedUpdate(DocumentEvent e) { filtrarTabla(); }
+        });
+        panelSuperior.add(txtBuscar);
 
         add(panelSuperior, BorderLayout.NORTH);
 
-        // Panel central para los campos
-        panelCampos = new JPanel(new GridBagLayout());
-        panelCampos.setBackground(new Color(250, 250, 255));
-        panelCampos.setBorder(BorderFactory.createLineBorder(new Color(220, 230, 255), 1));
-        JScrollPane scrollPane = new JScrollPane(panelCampos);
-        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-        scrollPane.setBorder(BorderFactory.createLineBorder(new Color(150, 200, 255), 1));
-        add(scrollPane, BorderLayout.CENTER);
+        // Modelo y Tabla
+        modeloTabla = new DefaultTableModel();
+        tablaInventarios = new JTable(modeloTabla);
+        tablaInventarios.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        tablaInventarios.setBorder(BorderFactory.createLineBorder(new Color(100, 150, 255), 1));
+        tablaInventarios.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        tablaInventarios.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
 
-        // Panel de botones
-        JPanel panelBotones = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
-        panelBotones.setBackground(new Color(240, 240, 250));
-
-        JButton btnGuardar = new JButton("Guardar");
-        btnGuardar.setBackground(new Color(100, 150, 255));
-        btnGuardar.setForeground(Color.WHITE);
-        btnGuardar.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        btnGuardar.setFocusPainted(false);
-        btnGuardar.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
-        btnGuardar.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseEntered(java.awt.event.MouseEvent evt) {
-                btnGuardar.setBackground(new Color(80, 130, 230));
-            }
-
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                btnGuardar.setBackground(new Color(100, 150, 255));
+        // Listener para habilitar/deshabilitar el botón Editar
+        tablaInventarios.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+            public void valueChanged(ListSelectionEvent event) {
+                btnEditar.setEnabled(tablaInventarios.getSelectedRow() != -1);
             }
         });
-        btnGuardar.addActionListener(e -> guardarInventario());
-        panelBotones.add(btnGuardar);
+
+        JScrollPane scrollPane = new JScrollPane(tablaInventarios);
+        add(scrollPane, BorderLayout.CENTER);
+
+        // Panel de Botones: Editar y Eliminar
+        JPanel panelBotones = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
+        panelBotones.setBackground(new Color(240, 240, 250));
+        btnEditar = new JButton("Editar");
+        btnEditar.setBackground(new Color(100, 150, 255));
+        btnEditar.setForeground(Color.WHITE);
+        btnEditar.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        btnEditar.setFocusPainted(false);
+        btnEditar.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+        btnEditar.addMouseListener(new java.awt.event.MouseAdapter() {
+        public void mouseEntered(java.awt.event.MouseEvent evt) {
+            btnEditar.setBackground(new Color(80, 130, 230));
+        }
+
+        public void mouseExited(java.awt.event.MouseEvent evt) {
+            btnEditar.setBackground(new Color(100, 150, 255));
+            }
+        });
+        btnEditar.setEnabled(false);
+        btnEditar.addActionListener(e -> editarInventarioSeleccionado());
+
+        JButton btnEliminar = new JButton("Eliminar");
+        btnEliminar.setBackground(new Color(100, 150, 255));
+        btnEliminar.setForeground(Color.WHITE);
+        btnEliminar.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        btnEliminar.setFocusPainted(false);
+        btnEliminar.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+        btnEliminar.addMouseListener(new java.awt.event.MouseAdapter() {
+        public void mouseEntered(java.awt.event.MouseEvent evt) {
+            btnEliminar.setBackground(new Color(80, 130, 230));
+        }
+
+        public void mouseExited(java.awt.event.MouseEvent evt) {
+            btnEliminar.setBackground(new Color(100, 150, 255));
+            }
+        });
+        btnEliminar.addActionListener(e -> eliminarInventarioSeleccionado());
+
+        panelBotones.add(btnEditar);
+        panelBotones.add(btnEliminar);
         add(panelBotones, BorderLayout.SOUTH);
     }
     
-    // Finaliza los estilos  
+        // Finaliza los estilos  
 
-    private void filtrarComboBox() {
-        String filtro = txtFiltro.getText().toLowerCase();
-        List<String> resultadosFiltrados = todosLosFormularios.stream()
-                .filter(nombre -> nombre.toLowerCase().contains(filtro))
-                .collect(Collectors.toList());
-
-        comboFormularios.setModel(new DefaultComboBoxModel<>(resultadosFiltrados.toArray(new String[0])));
+    /**
+     * Carga los tipos de documentos desde la base de datos y los devuelve como un arreglo de Strings.
+     * Incluye la opción "Todas las Tablas" al inicio.
+     */
+    private String[] cargarTiposDocumentos() {
+        try {
+            ArrayList<String> tipos = gestionInventarioDAO.obtenerTiposDocumentos();
+            tipos.add(0, "Todas las Tablas"); // Agregar opción para ver todas las tablas
+            return tipos.toArray(new String[0]);
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(this, "Error al cargar los tipos de documentos: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            return new String[0];
+        }
     }
 
-    private void cargarCampos() {
-        panelCampos.removeAll();
-        listaCampos = new ArrayList<>();
-        listaNombresColumnas = new ArrayList<>();
-        nombreFormularioSeleccionado = (String) comboFormularios.getSelectedItem();
+    /**
+     * Carga los datos en la tabla según la selección del ComboBox.
+     * Si se selecciona "Todas las Tablas", combina los datos de todas las tablas.
+     */
+    private void cargarTabla() {
+        modeloTabla.setRowCount(0);
+        modeloTabla.setColumnCount(0);
+        datosOriginales = new ArrayList<>();
 
-        if (nombreFormularioSeleccionado == null || nombreFormularioSeleccionado.isEmpty()) {
-            panelCampos.revalidate();
-            panelCampos.repaint();
-            return;
-        }
-
-        // Añadir "_tabla" al nombre de la tabla seleccionada
-        String nombreTablaConExtension = nombreFormularioSeleccionado + "_tabla";
+        String seleccion = (String) comboFormularios.getSelectedItem();
+        if (seleccion == null) return;
 
         try {
-            ArrayList<String> columnas = gestionInventarioDAO.obtenerColumnasDeTabla(nombreTablaConExtension);
-            String nuevoId = gestionInventarioDAO.generarNuevoIdConPrefijo(nombreTablaConExtension);
+            if ("Todas las Tablas".equals(seleccion)) {
+                // Obtener todas las columnas únicas de todas las tablas
+                ArrayList<String> todasColumnas = new ArrayList<>();
+                ArrayList<ArrayList<String>> datosTotales = new ArrayList<>();
+                ArrayList<String> tipos = gestionInventarioDAO.obtenerTiposDocumentos();
 
-            GridBagConstraints gbc = new GridBagConstraints();
-            gbc.insets = new Insets(10, 10, 10, 10);
-            gbc.fill = GridBagConstraints.HORIZONTAL;
-            gbc.weightx = 1.0;
-            gbc.gridwidth = 1;
+                for (String tipo : tipos) {
+                    String nombreTabla = gestionInventarioDAO.obtenerNombreTablaPorTipo(tipo);
+                    if (nombreTabla != null) {
+                        ArrayList<String> columnas = gestionInventarioDAO.obtenerColumnasDeTabla(nombreTabla);
+                        // Agregar columnas si no existen
+                        for (String columna : columnas) {
+                            if (!todasColumnas.contains(columna)) {
+                                todasColumnas.add(columna);
+                                modeloTabla.addColumn(columna);
+                            }
+                        }
 
-            // Campo de ID automático en la parte superior izquierda
-            JLabel lblId = new JLabel("ID:");
-            gbc.gridx = 0;
-            gbc.gridy = 0;
-            panelCampos.add(lblId, gbc);
-
-            JTextField txtId = new JTextField(20);
-            txtId.setText(nuevoId);
-            txtId.setEditable(false);  // Solo lectura
-            gbc.gridx = 1;
-            panelCampos.add(txtId, gbc);
-
-            // Añadir txtId a listaCampos
-            listaCampos.add(txtId);
-            // **No** añadir 'id' a listaNombresColumnas aquí
-
-            // Coloca los demás campos en una cuadrícula de 2 columnas
-            int fila = 1;
-            int columna = 0;
-
-            for (String columnaNombre : columnas) {
-                if (columnaNombre.equalsIgnoreCase("id")) continue;  // Ignora el campo ID manual
-
-                JLabel label = new JLabel(columnaNombre + ":");
-                gbc.gridx = columna * 2;
-                gbc.gridy = fila;
-                panelCampos.add(label, gbc);
-
-                Component campo;
-                if (columnaNombre.toLowerCase().contains("fecha")) {
-                    UtilDateModel model = new UtilDateModel();
-                    Properties p = new Properties();
-                    p.put("text.today", "Hoy");
-                    JDatePanelImpl datePanel = new JDatePanelImpl(model, p);
-                    JDatePickerImpl datePicker = new JDatePickerImpl(datePanel, new DateLabelFormatter());
-                    campo = datePicker;
-                } else {
-                    JTextField txtCampo = new JTextField(20);
-                    campo = txtCampo;
+                        ArrayList<ArrayList<String>> datos = gestionInventarioDAO.obtenerDatosDeTabla(nombreTabla);
+                        for (ArrayList<String> fila : datos) {
+                            ArrayList<String> filaCompleta = new ArrayList<>();
+                            // Mapear los valores a las columnas correspondientes
+                            for (String columna : todasColumnas) {
+                                int index = columnas.indexOf(columna);
+                                if (index != -1 && index < fila.size()) {
+                                    filaCompleta.add(fila.get(index));
+                                } else {
+                                    filaCompleta.add(""); // Vacío si la columna no existe en esta tabla
+                                }
+                            }
+                            datosTotales.add(filaCompleta);
+                        }
+                    }
                 }
 
-                gbc.gridx = columna * 2 + 1;
-                panelCampos.add(campo, gbc);
+                datosOriginales = datosTotales;
+                for (ArrayList<String> fila : datosTotales) {
+                    modeloTabla.addRow(fila.toArray());
+                }
+            } else {
+                // Cargar datos de una sola tabla
+                nombreTablaSeleccionada = gestionInventarioDAO.obtenerNombreTablaPorTipo(seleccion);
+                if (nombreTablaSeleccionada == null) {
+                    JOptionPane.showMessageDialog(this, "No se encontró la tabla para el tipo de documento seleccionado.", "Error", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
 
-                listaCampos.add(campo);
-                listaNombresColumnas.add(columnaNombre);
+                ArrayList<String> columnas = gestionInventarioDAO.obtenerColumnasDeTabla(nombreTablaSeleccionada);
+                for (String columna : columnas) {
+                    modeloTabla.addColumn(columna);
+                }
 
-                // Alterna la columna; si ya se han colocado dos columnas, pasa a la siguiente fila
-                if (columna == 1) {
-                    fila++;
-                    columna = 0;
-                } else {
-                    columna = 1;
+                ArrayList<ArrayList<String>> datos = gestionInventarioDAO.obtenerDatosDeTabla(nombreTablaSeleccionada);
+                datosOriginales = datos;
+                for (ArrayList<String> fila : datos) {
+                    modeloTabla.addRow(fila.toArray());
                 }
             }
-
-            panelCampos.revalidate();
-            panelCampos.repaint();
-
         } catch (SQLException e) {
-            JOptionPane.showMessageDialog(this, "Error al cargar los campos: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Error al cargar los datos del inventario: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
-    private void guardarInventario() {
-        if (nombreFormularioSeleccionado == null || nombreFormularioSeleccionado.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Por favor, seleccione un formulario.", "Error", JOptionPane.ERROR_MESSAGE);
+    /**
+     * Filtra la tabla según el texto ingresado en el campo de búsqueda.
+     */
+    private void filtrarTabla() {
+        String filtro = txtBuscar.getText().toLowerCase();
+        modeloTabla.setRowCount(0); // Limpiar la tabla antes de filtrar
+
+        for (ArrayList<String> fila : datosOriginales) {
+            boolean coincide = fila.stream().anyMatch(valor -> valor.toLowerCase().contains(filtro));
+            if (coincide) {
+                modeloTabla.addRow(fila.toArray());
+            }
+        }
+    }
+
+    /**
+     * Edita el inventario seleccionado en la tabla.
+     */
+    private void editarInventarioSeleccionado() {
+        int filaSeleccionada = tablaInventarios.getSelectedRow();
+        if (filaSeleccionada == -1) {
+            JOptionPane.showMessageDialog(this, "Por favor, seleccione un inventario para editar.", "Información", JOptionPane.INFORMATION_MESSAGE);
             return;
         }
 
-        if (tableModelVacio()) {
-            JOptionPane.showMessageDialog(this, "No hay campos para guardar.", "Error", JOptionPane.ERROR_MESSAGE);
+        // Asumiendo que la primera columna es el ID del inventario
+        String idInventario = modeloTabla.getValueAt(filaSeleccionada, 0).toString();
+        EditarInventario editarInventarioPanel = new EditarInventario(nombreTablaSeleccionada, idInventario);
+
+        int result = JOptionPane.showConfirmDialog(this, editarInventarioPanel, "Editar Inventario", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+        if (result == JOptionPane.OK_OPTION) {
+            cargarTabla();
+        }
+    }
+
+    /**
+     * Elimina el inventario seleccionado en la tabla.
+     */
+    private void eliminarInventarioSeleccionado() {
+        int filaSeleccionada = tablaInventarios.getSelectedRow();
+        if (filaSeleccionada == -1) {
+            JOptionPane.showMessageDialog(this, "Por favor, seleccione un inventario para eliminar.", "Información", JOptionPane.INFORMATION_MESSAGE);
             return;
         }
 
-        ArrayList<String> valores = new ArrayList<>();
-
-        // Obtener el ID generado automáticamente y añadirlo a los valores
-        JTextField txtId = (JTextField) listaCampos.get(0);  // El ID es el primer campo
-        String id = txtId.getText().trim();
-        System.out.println("ID a guardar: " + id); // Depuración
-        valores.add(id);
-
-        // Recorremos el resto de los campos para agregar sus valores
-        for (int i = 1; i < listaCampos.size(); i++) {  // Empezar desde el segundo elemento
-            Component campo = listaCampos.get(i);
-            if (campo instanceof JTextField) {
-                String valor = ((JTextField) campo).getText().trim();
-                System.out.println("Campo " + listaNombresColumnas.get(i - 1) + ": " + valor); // Depuración
-                valores.add(valor);
-            } else if (campo instanceof JDatePickerImpl) {
-                Object selectedDate = ((JDatePickerImpl) campo).getModel().getValue();
-                if (selectedDate != null) {
-                    Date date = (Date) selectedDate;
-                    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-                    String fecha = dateFormat.format(date);
-                    System.out.println("Fecha " + listaNombresColumnas.get(i - 1) + ": " + fecha); // Depuración
-                    valores.add(fecha);
-                } else {
-                    valores.add(null);
-                }
+        // Asumiendo que la primera columna es el ID del inventario
+        String idInventario = modeloTabla.getValueAt(filaSeleccionada, 0).toString();
+        int confirmacion = JOptionPane.showConfirmDialog(this, "¿Está seguro de que desea eliminar el inventario con ID: " + idInventario + "?", "Confirmar Eliminación", JOptionPane.YES_NO_OPTION);
+        if (confirmacion == JOptionPane.YES_OPTION) {
+            try {
+                gestionInventarioDAO.eliminarInventarioPorId(nombreTablaSeleccionada, idInventario);
+                JOptionPane.showMessageDialog(this, "Inventario eliminado exitosamente.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
+                cargarTabla();
+            } catch (SQLException e) {
+                JOptionPane.showMessageDialog(this, "Error al eliminar el inventario: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
             }
         }
-
-        // Añadir 'id' a la lista de columnas
-        ArrayList<String> columnasConId = new ArrayList<>(listaNombresColumnas);
-        columnasConId.add(0, "id"); // Asegúrate de que el 'id' esté en la primera posición
-
-        // Añadir la extensión "_tabla" al nombre de la tabla
-        String nombreTablaConExtension = nombreFormularioSeleccionado + "_tabla";
-
-        try {
-            gestionInventarioDAO.insertarDatosEnTabla(nombreTablaConExtension, columnasConId, valores);
-            JOptionPane.showMessageDialog(this, "Inventario agregado exitosamente en " + nombreFormularioSeleccionado, "Éxito", JOptionPane.INFORMATION_MESSAGE);
-            cargarCampos(); 
-        } catch (SQLException e) {
-            JOptionPane.showMessageDialog(this, "Error al guardar el inventario: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-            e.printStackTrace();
-        }
     }
-
-    // Método auxiliar para verificar si la tabla está vacía
-    private boolean tableModelVacio() {
-        return listaNombresColumnas == null || listaNombresColumnas.isEmpty();
-    }
-
 }
