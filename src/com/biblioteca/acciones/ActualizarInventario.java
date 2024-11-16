@@ -24,9 +24,13 @@ public class ActualizarInventario extends JPanel {
     private JButton btnEditar;
     private ArrayList<ArrayList<String>> datosOriginales;
 
+    
+    // Inician los estilos  
+    
     public ActualizarInventario() {
         setLayout(new BorderLayout(10, 10));
         setBorder(new EmptyBorder(10, 10, 10, 10));
+        setBackground(new Color(240, 240, 250)); // Fondo moderno
 
         // Título del panel
         add(new JLabel("Actualizar Entrada/Salida de Inventario", SwingConstants.CENTER), BorderLayout.NORTH);
@@ -40,8 +44,15 @@ public class ActualizarInventario extends JPanel {
         }
 
         // Panel Superior: ComboBox y Búsqueda
+               // Panel superior
         JPanel panelSuperior = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
-        panelSuperior.add(new JLabel("Seleccione el Formulario de Inventario:"));
+        panelSuperior.setBackground(new Color(200, 220, 255));
+        panelSuperior.setBorder(BorderFactory.createLineBorder(new Color(150, 180, 255), 1));
+
+        JLabel lblTitulo = new JLabel("Seleccione el Formulario de Inventario:");
+        lblTitulo.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        lblTitulo.setForeground(new Color(50, 50, 100));
+        panelSuperior.add(lblTitulo);
 
         // Cargar las tablas en el combo box, con la opción "Todas las Tablas"
         comboFormularios = new JComboBox<>(cargarTiposDocumentos());
@@ -51,6 +62,8 @@ public class ActualizarInventario extends JPanel {
         // Campo de búsqueda
         panelSuperior.add(new JLabel("Buscar:"));
         txtBuscar = new JTextField(15);
+        txtBuscar.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        txtBuscar.setBorder(BorderFactory.createLineBorder(new Color(100, 150, 255), 1));
         txtBuscar.getDocument().addDocumentListener(new DocumentListener() {
             public void insertUpdate(DocumentEvent e) { filtrarTabla(); }
             public void removeUpdate(DocumentEvent e) { filtrarTabla(); }
@@ -63,6 +76,8 @@ public class ActualizarInventario extends JPanel {
         // Modelo y Tabla
         modeloTabla = new DefaultTableModel();
         tablaInventarios = new JTable(modeloTabla);
+        tablaInventarios.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        tablaInventarios.setBorder(BorderFactory.createLineBorder(new Color(100, 150, 255), 1));
         tablaInventarios.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         tablaInventarios.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
 
@@ -78,17 +93,48 @@ public class ActualizarInventario extends JPanel {
 
         // Panel de Botones: Editar y Eliminar
         JPanel panelBotones = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
+        panelBotones.setBackground(new Color(240, 240, 250));
         btnEditar = new JButton("Editar");
+        btnEditar.setBackground(new Color(100, 150, 255));
+        btnEditar.setForeground(Color.WHITE);
+        btnEditar.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        btnEditar.setFocusPainted(false);
+        btnEditar.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+        btnEditar.addMouseListener(new java.awt.event.MouseAdapter() {
+        public void mouseEntered(java.awt.event.MouseEvent evt) {
+            btnEditar.setBackground(new Color(80, 130, 230));
+        }
+
+        public void mouseExited(java.awt.event.MouseEvent evt) {
+            btnEditar.setBackground(new Color(100, 150, 255));
+            }
+        });
         btnEditar.setEnabled(false);
         btnEditar.addActionListener(e -> editarInventarioSeleccionado());
 
         JButton btnEliminar = new JButton("Eliminar");
+        btnEliminar.setBackground(new Color(100, 150, 255));
+        btnEliminar.setForeground(Color.WHITE);
+        btnEliminar.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        btnEliminar.setFocusPainted(false);
+        btnEliminar.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+        btnEliminar.addMouseListener(new java.awt.event.MouseAdapter() {
+        public void mouseEntered(java.awt.event.MouseEvent evt) {
+            btnEliminar.setBackground(new Color(80, 130, 230));
+        }
+
+        public void mouseExited(java.awt.event.MouseEvent evt) {
+            btnEliminar.setBackground(new Color(100, 150, 255));
+            }
+        });
         btnEliminar.addActionListener(e -> eliminarInventarioSeleccionado());
 
         panelBotones.add(btnEditar);
         panelBotones.add(btnEliminar);
         add(panelBotones, BorderLayout.SOUTH);
     }
+    
+        // Finaliza los estilos  
 
     /**
      * Carga los tipos de documentos desde la base de datos y los devuelve como un arreglo de Strings.

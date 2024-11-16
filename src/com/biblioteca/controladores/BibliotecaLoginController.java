@@ -5,24 +5,32 @@ import com.biblioteca.ui.MenuAdministrador;
 import com.biblioteca.ui.MenuProfesor;
 import com.biblioteca.ui.MenuAlumno;
 import com.biblioteca.ui.BibliotecaLogin;
+import static com.biblioteca.utilidades.Validaciones.esCorreoValido;
 
 import javax.mail.*;
 import javax.mail.internet.*;
 import javax.swing.*;
 import java.util.Properties;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 public class BibliotecaLoginController {
 
     private BibliotecaLogin vista;
     private GestionUsuariosDAO dao;
+    
+    private static final Pattern EMAIL_PATTERN = Pattern.compile("^[\\w.%+-]+@[\\w.-]+\\.[a-zA-Z]{2,6}$");
+
+    public static boolean esCorreoValido(String email) {
+        return EMAIL_PATTERN.matcher(email).matches();
+    }
 
     public BibliotecaLoginController(BibliotecaLogin vista) {
         this.vista = vista;
         this.dao = new GestionUsuariosDAO();
     }
 
-    public void iniciarSesion() {
+  public void iniciarSesion() {
     String correo = vista.getCorreo();
     String contrasena = vista.getContrasena();
 
@@ -31,14 +39,15 @@ public class BibliotecaLoginController {
         return;
     }
 
-    if (dao.validarCredenciales(correo, contrasena)) {
-        String tipoUsuario = dao.obtenerTipoUsuario(correo);
-        String nombreCompleto = dao.obtenerNombreCompletoPorCorreo(correo); // Obtener nombre completo
+    // Llamamos a validarCredenciales y obtenemos el tipo de usuario
+    String tipoUsuario = dao.validarCredenciales(correo, contrasena);
 
+    if (tipoUsuario != null) {
         vista.mostrarMensaje("Login exitoso!");
-        vista.mostrarDialogo("Bienvenido, " + nombreCompleto); // Mostrar nombre y apellido
+        vista.mostrarDialogo("Bienvenido, " + correo);
         vista.dispose();
 
+        // Mostrar el menú adecuado según el tipo de usuario
         switch (tipoUsuario) {
             case "Administrador":
                 new MenuAdministrador().setVisible(true);
@@ -57,7 +66,6 @@ public class BibliotecaLoginController {
         vista.mostrarMensaje("Correo o contraseña incorrectos");
     }
 }
-
 
 
     public void recuperarContrasena() {
@@ -135,4 +143,37 @@ public class BibliotecaLoginController {
                                           "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
+    
+    public static String validarDatosUsuario(String nombre, String apellido, String clave, String email, String telefono, int limitePrestamos) {
+        StringBuilder errorBuilder = new StringBuilder();
+
+        if (nombre == null || nombre.trim().isEmpty()) {
+            errorBuilder.append("El nombre es obligatorio.\n");
+        }
+
+        if (apellido == null || apellido.trim().isEmpty()) {
+            errorBuilder.append("El apellido es obligatorio.\n");
+        }
+
+        if (clave == null || clave.trim().isEmpty()) {
+            errorBuilder.append("La contraseña es obligatoria.\n");
+        }
+
+        if (email == null || email.trim().isEmpty()) {
+            errorBuilder.append("El correo electrónico es obligatorio.\n");
+        } else if (!esCorreoValido(email)) {
+            errorBuilder.append("El correo electrónico no es válido.\n");
+        }
+
+        if (telefono == null || telefono.trim().isEmpty()) {
+            errorBuilder.append("El teléfono es obligatorio.\n");
+        }
+
+        if (limitePrestamos <= 0) {
+            errorBuilder.append("El límite de préstamos debe ser un número positivo.\n");
+        }
+
+        return errorBuilder.toString();
+    }
+    
 }

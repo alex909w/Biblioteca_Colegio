@@ -12,6 +12,8 @@ import java.util.ArrayList;
 import javax.swing.border.Border;
 
 public class AgregarFormulario extends JPanel {
+    
+    // Inician los estilos  
 
     // Componentes de la interfaz y la conexión a la base de datos
     private GestionFormularioDAO tipoDocumentoDAO;
@@ -143,6 +145,7 @@ private void agregarPanelSuperior() {
         add(scrollPane, BorderLayout.CENTER);
     }
 
+    // Finaliza los estilos  
 
     private void agregarPanelBotones() {
         JButton btnGuardar = crearBoton("Guardar Formulario", PRIMARY_COLOR, Color.WHITE);

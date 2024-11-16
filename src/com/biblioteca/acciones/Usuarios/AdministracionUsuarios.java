@@ -14,8 +14,18 @@ import java.util.Calendar;
 import java.util.Properties;
 
 public class AdministracionUsuarios extends JPanel {
-
-    // Componentes UI
+    // Colores personalizados
+    private static final Color PRIMARY_COLOR = new Color(51, 102, 204);
+    private static final Color SECONDARY_COLOR = new Color(240, 240, 240);
+    private static final Color ACCENT_COLOR = new Color(70, 130, 180);
+    private static final Color TEXT_COLOR = new Color(51, 51, 51);
+    private static final Color BUTTON_TEXT_COLOR = Color.WHITE;
+    
+    // Fuentes personalizadas
+    private static final Font TITLE_FONT = new Font("Segoe UI", Font.BOLD, 14);
+    private static final Font LABEL_FONT = new Font("Segoe UI", Font.PLAIN, 12);
+    private static final Font FIELD_FONT = new Font("Segoe UI", Font.PLAIN, 12);
+    
     private JTextField txtId, txtNombres, txtApellidos, txtEmail, txtTelefono, txtBuscar;
     private JPasswordField txtClave;
     private JComboBox<String> cbTipoUsuario, cbFiltroBusqueda;
@@ -23,350 +33,272 @@ public class AdministracionUsuarios extends JPanel {
     private JTable tableUsuarios;
     private DefaultTableModel tableModel;
     private JSpinner spinnerLimitePrestamos;
-    private JButton btnBuscar, btnLimpiarBusqueda, btnNuevo, btnActualizar, btnEliminar, btnGuardar, btnCancelar;
-
-    // Constantes de diseño
-    private static final Color PRIMARY_COLOR = new Color(63, 81, 181);    // Material Indigo
-    private static final Color ACCENT_COLOR = new Color(255, 64, 129);    // Material Pink
-    private static final Color BACKGROUND_COLOR = new Color(250, 250, 250);
-    private static final Color FIELD_BACKGROUND = Color.WHITE;
-    private static final Color TEXT_COLOR = new Color(33, 33, 33);
-    private static final Color SUBTLE_TEXT = new Color(117, 117, 117);
+    private JPanel panelBusqueda;
+    private JButton btnBuscar, btnLimpiarBusqueda;
     
-    private static final Font TITLE_FONT = new Font("Segoe UI", Font.BOLD, 24);
-    private static final Font HEADER_FONT = new Font("Segoe UI", Font.BOLD, 14);
-    private static final Font REGULAR_FONT = new Font("Segoe UI", Font.PLAIN, 13);
-    
-    private static final int BORDER_RADIUS = 8;
-    private static final int PADDING = 20;
+    // Botones NUEVO, ACTUALIZAR, ELIMINAR
+    private JButton btnNuevo, btnActualizar, btnEliminar;
 
-    // Variables de modo
     private boolean editMode = false;
     private boolean nuevoModo = false;
 
-    // Controlador
     private AdministracionUsuariosController controlador;
 
     public AdministracionUsuarios() {
         controlador = new AdministracionUsuariosController(this);
-        setupMainPanel();
-        initComponents();
-        controlador.cargarUsuariosEnTabla();
-        controlador.actualizarIdDinamicamente();
+        setLayout(new BorderLayout(10, 10));
+        setBackground(Color.WHITE);
+        setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+
+        initComponents();  // Inicializa los componentes
+        setupLayout();     // Configura el layout
+        setupListeners();  // Añade los listeners
+        controlador.cargarUsuariosEnTabla();  // Carga usuarios en la tabla
+        controlador.actualizarIdDinamicamente(); // Actualiza el ID
     }
 
-    private void setupMainPanel() {
-        setLayout(new BorderLayout(PADDING, PADDING));
-        setBackground(BACKGROUND_COLOR);
-        setBorder(BorderFactory.createEmptyBorder(PADDING, PADDING, PADDING, PADDING));
+    // Inicialización de componentes
+    private void initComponents() {
+        // Inicializa los componentes de la interfaz
+        txtId = createTextField(false);
+        txtNombres = createTextField(true);
+        txtApellidos = createTextField(true);
+        txtClave = createPasswordField(true);
+        txtEmail = createTextField(true);
+        txtTelefono = createTextField(true);
+        txtBuscar = createTextField(true);
+
+        cbTipoUsuario = createComboBox(new String[]{"Administrador", "Profesor", "Alumno"});
+        cbFiltroBusqueda = createComboBox(new String[]{"Nombre", "Correo", "Tipo de Usuario"});
+        spinnerLimitePrestamos = createSpinner();
+        datePicker = createDatePicker();
+
+        btnBuscar = createButton("Buscar", PRIMARY_COLOR);
+        btnLimpiarBusqueda = createButton("Limpiar", ACCENT_COLOR);
+
+        // Botones NUEVO, ACTUALIZAR, ELIMINAR
+        btnNuevo = createButton("Nuevo", PRIMARY_COLOR);
+        btnActualizar = createButton("Actualizar", ACCENT_COLOR);
+        btnEliminar = createButton("Eliminar", Color.RED);
+
+        initTable();
     }
 
-private void initComponents() {
-    // Panel principal con título
-    JPanel contentPanel = new JPanel(new BorderLayout(PADDING, PADDING));
-    contentPanel.setBackground(BACKGROUND_COLOR);
-    
-    // Título
-    JLabel titleLabel = new JLabel("Administración de Usuarios");
-    titleLabel.setFont(TITLE_FONT);
-    titleLabel.setForeground(PRIMARY_COLOR);
-    titleLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, PADDING, 0));
-    
-    contentPanel.add(titleLabel, BorderLayout.NORTH);
-    contentPanel.add(createMainContent(), BorderLayout.CENTER);
-
-    
-    // Crear JScrollPane y agregar el contentPanel
-    JScrollPane scrollPane = new JScrollPane(contentPanel);
-    scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-    scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-    
-    add(scrollPane, BorderLayout.CENTER);
-    add(createButtonPanel(), BorderLayout.SOUTH);
-}
-
-    private JPanel createMainContent() {
-        JPanel mainContent = new JPanel(new BorderLayout(PADDING, PADDING));
-        mainContent.setBackground(BACKGROUND_COLOR);
-
-        mainContent.add(createFormPanel(), BorderLayout.NORTH);
-        mainContent.add(createTablePanel(), BorderLayout.CENTER);
-
-        return mainContent;
-    }
-
-    private JPanel createFormPanel() {
-        JPanel formPanel = new JPanel(new GridBagLayout());
-        formPanel.setBackground(FIELD_BACKGROUND);
-        formPanel.setBorder(createPanelBorder("Información del Usuario"));
-
-        // Inicialización de componentes
-        initializeFormComponents();
-
-        // Layout
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(8, 12, 8, 12);
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.anchor = GridBagConstraints.WEST;
-
-        // Agregar componentes al panel
-        addComponentsToGrid(formPanel, gbc);
-
-        return formPanel;
-    }
-
-    private void initializeFormComponents() {
-        // Campos de texto
-        txtId = createStyledTextField(10, false);
-        txtNombres = createStyledTextField(15, true);
-        txtApellidos = createStyledTextField(15, true);
-        txtClave = createStyledPasswordField();
-        txtEmail = createStyledTextField(15, true);
-        txtTelefono = createStyledTextField(15, true);
-        
-        // ComboBox
-        cbTipoUsuario = createStyledComboBox(new String[]{"Administrador", "Profesor", "Alumno"});
-        
-        // Spinner
-        spinnerLimitePrestamos = createStyledSpinner();
-        
-        // DatePicker
-        datePicker = createStyledDatePicker();
-    }
-    
-    private void addComponentsToGrid(JPanel panel, GridBagConstraints gbc) {
-        // Agregar etiquetas y campos al panel
-        addLabelFieldPair(panel, gbc, "ID:", txtId, 0, 0);
-        addLabelFieldPair(panel, gbc, "Nombres:", txtNombres, 0, 1);
-        addLabelFieldPair(panel, gbc, "Apellidos:", txtApellidos, 2, 1);
-        addLabelFieldPair(panel, gbc, "Contraseña:", txtClave, 0, 2);
-        addLabelFieldPair(panel, gbc, "Correo Electrónico:", txtEmail, 2, 2);
-        addLabelFieldPair(panel, gbc, "Teléfono:", txtTelefono, 0, 3);
-        addLabelFieldPair(panel, gbc, "Tipo de Usuario:", cbTipoUsuario, 2, 3);
-        addLabelFieldPair(panel, gbc, "Límite de Préstamos:", spinnerLimitePrestamos, 0, 4);
-        addLabelFieldPair(panel, gbc, "Fecha de Registro:", datePicker, 2, 4);
-    }
-
-    private void addLabelFieldPair(JPanel panel, GridBagConstraints gbc, String label, Component field, int gridx, int gridy) {
-        gbc.gridx = gridx;
-        gbc.gridy = gridy;
-        panel.add(new JLabel(label), gbc);
-        gbc.gridx++;
-        panel.add(field, gbc);
-    }
-
-    private JTextField createStyledTextField(int columns, boolean editable) {
-        JTextField field = new JTextField(columns);
-        field.setFont(REGULAR_FONT);
-        field.setBackground(FIELD_BACKGROUND);
-        field.setForeground(TEXT_COLOR);
+    // Métodos para crear componentes
+    private JTextField createTextField(boolean editable) {
+        JTextField field = new JTextField(5);
+        field.setFont(FIELD_FONT);
         field.setEditable(editable);
-        field.setBorder(BorderFactory.createCompoundBorder(
-            new LineBorder(new Color(224, 224, 224)),
-            BorderFactory.createEmptyBorder(5, 8, 5, 8)
-        ));
+        field.setForeground(Color.GRAY); // Color del texto del placeholder
+        field.setBorder(createFieldBorder());
+        field.setPreferredSize(new Dimension(150, 30));
         return field;
     }
 
-    private JPasswordField createStyledPasswordField() {
-        JPasswordField field = new JPasswordField(15);
-        field.setFont(REGULAR_FONT);
-        field.setBackground(FIELD_BACKGROUND);
-        field.setForeground(TEXT_COLOR);
-        field.setBorder(BorderFactory.createCompoundBorder(
-            new LineBorder(new Color(224, 224, 224)),
-            BorderFactory.createEmptyBorder(5, 8, 5, 8)
-        ));
+    private JPasswordField createPasswordField(boolean editable) {
+        JPasswordField field = new JPasswordField(5);
+        field.setFont(FIELD_FONT);
+        field.setEditable(editable);
+        field.setForeground(Color.GRAY);
+        field.setBorder(createFieldBorder());
+        field.setPreferredSize(new Dimension(150, 30));
         return field;
     }
 
-    private JComboBox<String> createStyledComboBox(String[] items) {
+    private JComboBox<String> createComboBox(String[] items) {
         JComboBox<String> comboBox = new JComboBox<>(items);
-        comboBox.setFont(REGULAR_FONT);
-        comboBox.setBackground(FIELD_BACKGROUND);
-        comboBox.setForeground(TEXT_COLOR);
-        ((JComponent) comboBox.getRenderer()).setBorder(BorderFactory.createEmptyBorder(2, 8, 2, 8));
+        comboBox.setFont(FIELD_FONT);
+        comboBox.setBackground(Color.WHITE);
+        comboBox.setPreferredSize(new Dimension(150, 30));
         return comboBox;
     }
 
-    private JSpinner createStyledSpinner() {
+    private JSpinner createSpinner() {
         JSpinner spinner = new JSpinner(new SpinnerNumberModel(1, 1, 100, 1));
-        spinner.setFont(REGULAR_FONT);
-        JComponent editor = spinner.getEditor();
-        if (editor instanceof JSpinner.DefaultEditor) {
-            ((JSpinner.DefaultEditor)editor).getTextField().setBackground(FIELD_BACKGROUND);
-        }
+        spinner.setFont(FIELD_FONT);
         return spinner;
     }
 
-    private JDatePickerImpl createStyledDatePicker() {
+    private JDatePickerImpl createDatePicker() {
         UtilDateModel model = new UtilDateModel();
         Properties properties = new Properties();
         properties.put("text.today", "Hoy");
         properties.put("text.month", "Mes");
         properties.put("text.year", "Año");
         JDatePanelImpl datePanel = new JDatePanelImpl(model, properties);
-        JDatePickerImpl datePicker = new JDatePickerImpl(datePanel, new DateLabelFormatter());
-        
-        // Estilizar el componente
-        datePicker.getJFormattedTextField().setBackground(FIELD_BACKGROUND);
-        datePicker.getJFormattedTextField().setForeground(TEXT_COLOR);
-        datePicker.getJFormattedTextField().setFont(REGULAR_FONT);
-        
-        return datePicker;
+        return new JDatePickerImpl(datePanel, new DateLabelFormatter());
     }
 
-    private JPanel createTablePanel() {
-        JPanel tablePanel = new JPanel(new BorderLayout(PADDING, PADDING));
-        tablePanel.setBackground(BACKGROUND_COLOR);
-        
-        
-        // Panel de búsqueda
-        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 8));
-        searchPanel.setBackground(FIELD_BACKGROUND);
-        searchPanel.setBorder(createPanelBorder("Búsqueda"));
-        
-        txtBuscar = createStyledTextField(20, true);
-        cbFiltroBusqueda = createStyledComboBox(new String[]{"Nombre", "Correo", "Tipo de Usuario"});
-        btnBuscar = createStyledButton("Buscar", PRIMARY_COLOR);
-        btnLimpiarBusqueda = createStyledButton("Limpiar", null);
-        
-        searchPanel.add(new JLabel("Buscar:"));
-        searchPanel.add(txtBuscar);
-        searchPanel.add(cbFiltroBusqueda);
-        searchPanel.add(btnBuscar);
-        searchPanel.add(btnLimpiarBusqueda);
-        
-        // Tabla
-        tableModel = createTableModel();
-        tableUsuarios = createStyledTable();
-        JScrollPane scrollPane = new JScrollPane(tableUsuarios);
-        scrollPane.setBackground(FIELD_BACKGROUND);
-        scrollPane.setBorder(createPanelBorder("Resultados"));
-        
-        tablePanel.add(searchPanel, BorderLayout.NORTH);
-        tablePanel.add(scrollPane, BorderLayout.CENTER);
-        
-        return tablePanel;
-    }
-
-    private JTable createStyledTable() {
-        JTable table = new JTable(tableModel);
-        table.setFont(REGULAR_FONT);
-        table.setRowHeight(35);
-        table.setShowGrid(true);
-        table.setGridColor(new Color(224, 224, 224));
-        table.getTableHeader().setFont(HEADER_FONT);
-        table.getTableHeader().setBackground(PRIMARY_COLOR);
-        table.getTableHeader().setForeground(Color.WHITE);
-        table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        table.setSelectionBackground(PRIMARY_COLOR.brighter());
-        table.setSelectionForeground(Color.WHITE);
-        
-        return table;
-    }
-
-    private DefaultTableModel createTableModel() {
-        return new DefaultTableModel(
-            new Object[]{"ID", "Nombres", "Apellidos", "Tipo de Usuario", 
-                        "Correo Electrónico", "Clave", "Teléfono", 
-                        "Fecha de Registro", "Límite de Préstamos"}, 0) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
-            }
-        };
-    }
-
-    private JPanel createButtonPanel() {
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 10));
-        buttonPanel.setBackground(BACKGROUND_COLOR);
-        
-        btnNuevo = createStyledButton("Nuevo", PRIMARY_COLOR);
-        btnActualizar = createStyledButton("Actualizar", PRIMARY_COLOR);
-        btnEliminar = createStyledButton("Eliminar", ACCENT_COLOR);
-        btnGuardar = createStyledButton("Guardar", PRIMARY_COLOR);
-        btnCancelar = createStyledButton("Cancelar", null);
-        
-        btnGuardar.setVisible(false);
-        btnCancelar.setVisible(false);
-        
-        buttonPanel.add(btnNuevo);
-        buttonPanel.add(btnActualizar);
-        buttonPanel.add(btnEliminar);
-        buttonPanel.add(btnGuardar);
-        buttonPanel.add(btnCancelar);
-        
-        setupButtonListeners();
-        
-        return buttonPanel;
-    }
-
-    private JButton createStyledButton(String text, Color bgColor) {
+    private JButton createButton(String text, Color backgroundColor) {
         JButton button = new JButton(text);
-        button.setFont(REGULAR_FONT);
-        
-        if (bgColor != null) {
-            button.setBackground(bgColor);
-            button.setForeground(Color.WHITE);
-        } else {
-            button.setBackground(FIELD_BACKGROUND);
-            button.setForeground(TEXT_COLOR);
-        }
-        
+        button.setFont(LABEL_FONT);
+        button.setForeground(BUTTON_TEXT_COLOR);
+        button.setBackground(backgroundColor);
         button.setFocusPainted(false);
-        button.setBorderPainted(false);
         button.setOpaque(true);
         button.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        button.setPreferredSize(new Dimension(120, 35));
-        
-        // Efectos hover
         button.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseEntered(java.awt.event.MouseEvent evt) {
-                if (bgColor != null) {
-                    button.setBackground(bgColor.darker());
-                } else {
-                    button.setBackground(new Color(224, 224, 224));
-                }
+                button.setBackground(backgroundColor.darker());
             }
             public void mouseExited(java.awt.event.MouseEvent evt) {
-                if (bgColor != null) {
-                    button.setBackground(bgColor);
-                } else {
-                    button.setBackground(FIELD_BACKGROUND);
-                }
+                button.setBackground(backgroundColor);
             }
         });
-        
         return button;
     }
 
-    private Border createPanelBorder(String title) {
-        TitledBorder titledBorder = BorderFactory.createTitledBorder(
-            BorderFactory.createLineBorder(new Color(224, 224, 224)),
-            title
-        );
-        titledBorder.setTitleFont(HEADER_FONT);
-        titledBorder.setTitleColor(PRIMARY_COLOR);
-        
+    private Border createFieldBorder() {
         return BorderFactory.createCompoundBorder(
-            titledBorder,
-            BorderFactory.createEmptyBorder(10, 10, 10, 10)
+            BorderFactory.createLineBorder(SECONDARY_COLOR),
+            BorderFactory.createEmptyBorder(5, 8, 5, 8)
         );
     }
 
-    private void setupButtonListeners() {
+    // Inicializa la tabla
+    private void initTable() {
+        tableModel = new DefaultTableModel(
+            new Object[]{"ID", "Nombres", "Apellidos", "Tipo de Usuario", 
+                        "Correo Electrónico", "Clave", "Teléfono", 
+                        "Fecha de Registro", "Límite de Préstamos"}, 0
+        );
+        tableUsuarios = new JTable(tableModel);
+        tableUsuarios.setFont(FIELD_FONT);
+        tableUsuarios.setRowHeight(20);
+        tableUsuarios.setGridColor(SECONDARY_COLOR);
+        tableUsuarios.setSelectionBackground(PRIMARY_COLOR.brighter());
+        tableUsuarios.setSelectionForeground(Color.WHITE);
+
+        // Encabezado de la tabla
+        JTableHeader header = tableUsuarios.getTableHeader();
+        header.setFont(TITLE_FONT);
+        header.setBackground(PRIMARY_COLOR);
+        header.setForeground(Color.WHITE);
+    }
+
+    // Configura el layout de la interfaz
+    private void setupLayout() {
+        JPanel panelCampos = createPanelWithLayout();
+        addFieldsToPanel(panelCampos);
+
+        // Panel de búsqueda
+        setupSearchPanel();
+
+        // Panel superior
+        JPanel panelSuperior = new JPanel(new BorderLayout(0, 15));
+        panelSuperior.setBackground(Color.WHITE);
+        panelSuperior.add(panelCampos, BorderLayout.NORTH);
+        panelSuperior.add(panelBusqueda, BorderLayout.SOUTH);
+
+        // Panel de botones en la parte inferior
+        JPanel panelBotones = new JPanel();
+        panelBotones.setLayout(new FlowLayout(FlowLayout.CENTER, 20, 10)); // Centraliza los botones
+        panelBotones.setBackground(Color.WHITE);
+        panelBotones.add(btnNuevo);
+        panelBotones.add(btnActualizar);
+        panelBotones.add(btnEliminar);
+
+        // Agregar todo al layout principal
+        JScrollPane scrollPane = new JScrollPane(tableUsuarios);
+        scrollPane.setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
+        scrollPane.getViewport().setBackground(Color.WHITE);
+
+        add(panelSuperior, BorderLayout.NORTH);
+        add(scrollPane, BorderLayout.CENTER);
+        add(panelBotones, BorderLayout.SOUTH);  // Añadir los botones en la parte inferior
+    }
+
+    private JPanel createPanelWithLayout() {
+        JPanel panel = new JPanel(new GridBagLayout());
+        panel.setBackground(Color.WHITE);
+        panel.setBorder(createSectionBorder("Información del Usuario"));
+        return panel;
+    }
+
+    private void addFieldsToPanel(JPanel panel) {
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(8, 10, 8, 10);
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+
+        addFormRow(panel, "ID:", txtId, gbc, 0, 0);
+        addFormRow(panel, "Nombres:", txtNombres, gbc, 1, 0);
+        addFormRow(panel, "Contraseña:", txtClave, gbc, 2, 0);
+        addFormRow(panel, "Teléfono:", txtTelefono, gbc, 3, 0);
+        
+        addFormRow(panel, "Apellidos:", txtApellidos, gbc, 0, 1);
+        addFormRow(panel, "Correo Electrónico:", txtEmail, gbc, 1, 1);
+        addFormRow(panel, "Límite de Préstamos:", spinnerLimitePrestamos, gbc, 2, 1);
+        addFormRow(panel, "Fecha de Registro:", datePicker, gbc, 3, 1);
+    }
+
+    private void addFormRow(JPanel panel, String labelText, JComponent component, GridBagConstraints gbc, int row, int column) {
+        JLabel label = new JLabel(labelText);
+        label.setFont(LABEL_FONT);
+        label.setForeground(TEXT_COLOR);
+
+        gbc.gridx = column;
+        gbc.gridy = row;
+        panel.add(label, gbc);
+
+        gbc.gridx = column + 1;
+        gbc.weightx = 1.0;
+        panel.add(component, gbc);
+        gbc.weightx = 0.0;
+    }
+
+    // Panel de búsqueda
+    private void setupSearchPanel() {
+        panelBusqueda = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
+        panelBusqueda.setBackground(Color.WHITE);
+
+        JLabel lblBuscar = new JLabel("Buscar:");
+        lblBuscar.setFont(LABEL_FONT);
+
+        panelBusqueda.add(lblBuscar);
+        panelBusqueda.add(txtBuscar);
+        panelBusqueda.add(cbFiltroBusqueda);
+        panelBusqueda.add(btnBuscar);
+        panelBusqueda.add(btnLimpiarBusqueda);
+    }
+
+    private Border createSectionBorder(String title) {
+        TitledBorder titledBorder = BorderFactory.createTitledBorder(
+            BorderFactory.createLineBorder(SECONDARY_COLOR),
+            title,
+            TitledBorder.LEFT,
+            TitledBorder.TOP,
+            TITLE_FONT,
+            TEXT_COLOR
+        );
+        return titledBorder;
+    }
+
+    // Agregar listeners para los botones y eventos
+    private void setupListeners() {
         btnBuscar.addActionListener(e -> controlador.buscarUsuarios());
         btnLimpiarBusqueda.addActionListener(e -> controlador.limpiarBusqueda());
-        btnNuevo.addActionListener(e -> controlador.manejarBotonNuevo());
-        btnActualizar.addActionListener(e -> controlador.manejarBotonActualizar());
-        btnEliminar.addActionListener(e -> controlador.manejarBotonEliminar());
-        btnGuardar.addActionListener(e -> controlador.manejarBotonGuardar());
-        btnCancelar.addActionListener(e -> controlador.manejarBotonCancelar());
         cbTipoUsuario.addActionListener(e -> controlador.actualizarIdDinamicamente());
+
+        // Agregar listeners para los botones NUEVO, ACTUALIZAR y ELIMINAR
+        btnNuevo.addActionListener(e -> {
+            if (btnNuevo.getText().equals("Nuevo")) {
+                habilitarCampos(true);
+                limpiarCampos();
+                controlador.actualizarIdDinamicamente();
+                btnNuevo.setText("Guardar");
+            } else if (btnNuevo.getText().equals("Guardar")) {
+                controlador.nuevoUsuario();
+                habilitarCampos(false);
+                limpiarCampos();
+                btnNuevo.setText("Nuevo");
+            }
+        });
+
+        btnActualizar.addActionListener(e -> controlador.actualizarUsuario());
+        btnEliminar.addActionListener(e -> controlador.eliminarUsuario());
     }
 
-    // Métodos adicionales
     public void habilitarCampos(boolean habilitar) {
         txtNombres.setEnabled(habilitar);
         txtApellidos.setEnabled(habilitar);
@@ -379,7 +311,6 @@ private void initComponents() {
     }
 
     public void limpiarCampos() {
-        txtId.setText("");
         txtNombres.setText("");
         txtApellidos.setText("");
         txtClave.setText("");
@@ -484,28 +415,20 @@ private void initComponents() {
         return btnLimpiarBusqueda;
     }
 
-    // Getters para los Botones de Acción
-    public JButton getBtnNuevo() {
-        return btnNuevo;
+    // Getter para el Panel de Búsqueda
+    public JPanel getPanelBusqueda() {
+        return panelBusqueda;
     }
 
-    public JButton getBtnActualizar() {
-        return btnActualizar;
+    // Renderer para ocultar la contraseña en la tabla
+    private class PasswordRenderer extends DefaultTableCellRenderer {
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            if (c instanceof JLabel && value instanceof String) {
+                ((JLabel) c).setText(((String) value).replaceAll(".", "*"));
+            }
+            return c;
+        }
     }
-
-    public JButton getBtnEliminar() {
-        return btnEliminar;
-    }
-
-    public JButton getBtnGuardar() {
-        return btnGuardar;
-    }
-
-    public JButton getBtnCancelar() {
-        return btnCancelar;
-    }
-
-
-    
-    
 }
