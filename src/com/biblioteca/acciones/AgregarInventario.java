@@ -32,65 +32,100 @@ public class AgregarInventario extends JPanel {
     private String nombreFormularioSeleccionado;
     private List<String> todosLosFormularios;
 
+
+// Inician los estilos   
+
     public AgregarInventario() {
         setLayout(new BorderLayout(10, 10));
         setBorder(new EmptyBorder(10, 10, 10, 10));
+        setBackground(new Color(240, 240, 250)); // Fondo moderno
 
         try {
             gestionInventarioDAO = new GestionInventarioDAO();
             todosLosFormularios = gestionInventarioDAO.obtenerTiposDocumentos();
 
-            // Limpiar la lista para mostrar solo los nombres de los formularios sin la extensión "_tabla"
             todosLosFormularios = todosLosFormularios.stream()
-                .map(nombre -> {
-                    // Remover la extensión "_tabla" si existe
-                    if (nombre.toLowerCase().endsWith("_tabla")) {
-                        return nombre.substring(0, nombre.length() - 6);
-                    } else {
-                        return nombre;
-                    }
-                })
-                .collect(Collectors.toList());
+                    .map(nombre -> nombre.toLowerCase().endsWith("_tabla") ? nombre.substring(0, nombre.length() - 6) : nombre)
+                    .collect(Collectors.toList());
 
         } catch (SQLException e) {
             JOptionPane.showMessageDialog(this, "Error al conectar con la base de datos: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
 
-        // Configuración del panel superior
+        // Panel superior
         JPanel panelSuperior = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
-        panelSuperior.add(new JLabel("Seleccione el Formulario de Inventario:"));
+        panelSuperior.setBackground(new Color(200, 220, 255));
+        panelSuperior.setBorder(BorderFactory.createLineBorder(new Color(150, 180, 255), 1));
+
+        JLabel lblTitulo = new JLabel("Seleccione el Formulario de Inventario:");
+        lblTitulo.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        lblTitulo.setForeground(new Color(50, 50, 100));
+        panelSuperior.add(lblTitulo);
 
         txtFiltro = new JTextField(15);
+        txtFiltro.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        txtFiltro.setBorder(BorderFactory.createLineBorder(new Color(100, 150, 255), 1));
         txtFiltro.getDocument().addDocumentListener(new DocumentListener() {
             @Override
-            public void insertUpdate(DocumentEvent e) { filtrarComboBox(); }
-            @Override
-            public void removeUpdate(DocumentEvent e) { filtrarComboBox(); }
-            @Override
-            public void changedUpdate(DocumentEvent e) { filtrarComboBox(); }
-        });
+            public void insertUpdate(DocumentEvent e) {
+                filtrarComboBox();
+            }
 
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                filtrarComboBox();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                filtrarComboBox();
+            }
+        });
         panelSuperior.add(txtFiltro);
 
         comboFormularios = new JComboBox<>(todosLosFormularios.toArray(new String[0]));
         comboFormularios.setPreferredSize(new Dimension(200, 25));
+        comboFormularios.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        comboFormularios.setBorder(BorderFactory.createLineBorder(new Color(100, 150, 255), 1));
         comboFormularios.addActionListener(e -> cargarCampos());
         panelSuperior.add(comboFormularios);
 
         add(panelSuperior, BorderLayout.NORTH);
 
-        // Panel para los campos y botones
+        // Panel central para los campos
         panelCampos = new JPanel(new GridBagLayout());
+        panelCampos.setBackground(new Color(250, 250, 255));
+        panelCampos.setBorder(BorderFactory.createLineBorder(new Color(220, 230, 255), 1));
         JScrollPane scrollPane = new JScrollPane(panelCampos);
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        scrollPane.setBorder(BorderFactory.createLineBorder(new Color(150, 200, 255), 1));
         add(scrollPane, BorderLayout.CENTER);
 
+        // Panel de botones
         JPanel panelBotones = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
+        panelBotones.setBackground(new Color(240, 240, 250));
+
         JButton btnGuardar = new JButton("Guardar");
+        btnGuardar.setBackground(new Color(100, 150, 255));
+        btnGuardar.setForeground(Color.WHITE);
+        btnGuardar.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        btnGuardar.setFocusPainted(false);
+        btnGuardar.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+        btnGuardar.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                btnGuardar.setBackground(new Color(80, 130, 230));
+            }
+
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                btnGuardar.setBackground(new Color(100, 150, 255));
+            }
+        });
         btnGuardar.addActionListener(e -> guardarInventario());
         panelBotones.add(btnGuardar);
         add(panelBotones, BorderLayout.SOUTH);
     }
+    
+    // Finaliza los estilos  
 
     private void filtrarComboBox() {
         String filtro = txtFiltro.getText().toLowerCase();
