@@ -1,0 +1,10 @@
+com.biblioteca.Administracion
+com.biblioteca.GestionProductos
+com.biblioteca.acciones
+com.biblioteca.acciones.Mora
+com.biblioteca.acciones.Usuarios
+com.biblioteca.bd
+com.biblioteca.control
+com.biblioteca.dao
+com.biblioteca.ui
+com.biblioteca.utilidades
